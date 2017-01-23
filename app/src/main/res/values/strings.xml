@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">BusTracker</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="access_token">pk.eyJ1IjoiZGFja2VybWFuMSIsImEiOiJjaXk5NGM0Y2gwMDJpMnFvdnlwcjVua3htIn0.9J2LxqLc_chWIXg7NTOeLA</string>
+</resources>
