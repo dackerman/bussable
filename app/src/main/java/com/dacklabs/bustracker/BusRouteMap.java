@@ -1,15 +1,14 @@
 package com.dacklabs.bustracker;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,15 +19,18 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.google.common.collect.ArrayListMultimap;
+import com.dacklabs.bustracker.data.BusLocations;
+import com.dacklabs.bustracker.data.BusRoute;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
+
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 public class BusRouteMap extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -44,6 +46,9 @@ public class BusRouteMap extends AppCompatActivity
                 break;
         }
     }
+
+    MapBoxRouteObjects route10;
+    NextBusApi api = new NextBusApi(new HttpService());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,12 +82,8 @@ public class BusRouteMap extends AppCompatActivity
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(MapboxMap mapboxMap) {
-                mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
-                    @Override
-                    public void onCameraChange(CameraPosition position) {
-                        Log.d("dack", "New camera position: " + position.toString());
-                    }
-                });
+                route10 = new MapBoxRouteObjects("10", mapboxMap);
+                route10.addToMap();
             }
         });
 
@@ -90,8 +91,8 @@ public class BusRouteMap extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                new UpdateRouteTask(route10).updateRouteAsynchronously();
+                new UpdateLocationsTask(route10).updateLocationsAsynchronously();
             }
         });
 
@@ -103,6 +104,70 @@ public class BusRouteMap extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private class UpdateRouteTask extends AsyncTask<Void, Void, NextBusApi.QueryResult<BusRoute>> {
+
+        private final MapBoxRouteObjects busRoute;
+
+        public UpdateRouteTask(MapBoxRouteObjects busRoute) {
+            super();
+            this.busRoute = busRoute;
+        }
+
+        @Override
+        protected NextBusApi.QueryResult<BusRoute> doInBackground(Void... params) {
+            return api.queryBusRouteFor("sf-muni", busRoute.route);
+        }
+
+        public void updateRouteAsynchronously() {
+            this.execute((Void)null);
+        }
+
+        @Override
+        public void onPostExecute(NextBusApi.QueryResult<BusRoute> routeResult) {
+            String snackMessage;
+            if (routeResult.result == null) {
+                snackMessage = routeResult.failureMessage;
+            } else {
+                busRoute.updateRoute(routeResult.result);
+                snackMessage = "Success! Route has " + routeResult.result.paths.size() + " paths!";
+            }
+            Snackbar.make(findViewById(R.id.fab), snackMessage, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+    }
+
+    private class UpdateLocationsTask extends AsyncTask<Void, Void, NextBusApi.QueryResult<BusLocations>> {
+
+        private final MapBoxRouteObjects busRoute;
+
+        public UpdateLocationsTask(MapBoxRouteObjects busRoute) {
+            super();
+            this.busRoute = busRoute;
+        }
+
+        @Override
+        protected NextBusApi.QueryResult<BusLocations> doInBackground(Void... params) {
+            return api.queryBusLocationsFor("sf-muni", busRoute.route);
+        }
+
+        public void updateLocationsAsynchronously() {
+            this.execute((Void)null);
+        }
+
+        @Override
+        public void onPostExecute(NextBusApi.QueryResult<BusLocations> routeResult) {
+            String snackMessage;
+            if (routeResult.result == null) {
+                snackMessage = routeResult.failureMessage;
+            } else {
+                busRoute.updateBusses(routeResult.result);
+                snackMessage = "Success! Route has " + routeResult.result.locations().size() + " locations!";
+            }
+            Snackbar.make(findViewById(R.id.fab), snackMessage, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
     }
 
     @Override
