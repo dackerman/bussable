@@ -21,6 +21,9 @@ import android.view.MenuItem;
 
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.http.HttpService;
+import com.dacklabs.bustracker.http.NextBusApi;
+import com.dacklabs.bustracker.mapbox.MapBoxRouteObjects;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -48,6 +51,7 @@ public class BusRouteMap extends AppCompatActivity
     }
 
     MapBoxRouteObjects route10;
+    MapBoxRouteObjects route47;
     NextBusApi api = new NextBusApi(new HttpService());
 
     @Override
@@ -82,8 +86,13 @@ public class BusRouteMap extends AppCompatActivity
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(MapboxMap mapboxMap) {
-                route10 = new MapBoxRouteObjects("10", mapboxMap);
+                route10 = new MapBoxRouteObjects("10", "#f00", mapboxMap);
                 route10.addToMap();
+                new UpdateRouteTask(route10).updateRouteAsynchronously();
+
+                route47 = new MapBoxRouteObjects("47", "#0f0", mapboxMap);
+                route47.addToMap();
+                new UpdateRouteTask(route47).updateRouteAsynchronously();
             }
         });
 
@@ -91,8 +100,8 @@ public class BusRouteMap extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new UpdateRouteTask(route10).updateRouteAsynchronously();
                 new UpdateLocationsTask(route10).updateLocationsAsynchronously();
+                new UpdateLocationsTask(route47).updateLocationsAsynchronously();
             }
         });
 
@@ -121,7 +130,7 @@ public class BusRouteMap extends AppCompatActivity
         }
 
         public void updateRouteAsynchronously() {
-            this.execute((Void)null);
+            this.execute((Void) null);
         }
 
         @Override
@@ -131,7 +140,7 @@ public class BusRouteMap extends AppCompatActivity
                 snackMessage = routeResult.failureMessage;
             } else {
                 busRoute.updateRoute(routeResult.result);
-                snackMessage = "Success! Route has " + routeResult.result.paths.size() + " paths!";
+                snackMessage = "Success! Route has " + routeResult.result.paths().size() + " paths!";
             }
             Snackbar.make(findViewById(R.id.fab), snackMessage, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
@@ -141,6 +150,7 @@ public class BusRouteMap extends AppCompatActivity
     private class UpdateLocationsTask extends AsyncTask<Void, Void, NextBusApi.QueryResult<BusLocations>> {
 
         private final MapBoxRouteObjects busRoute;
+        private String lastQueryTime;
 
         public UpdateLocationsTask(MapBoxRouteObjects busRoute) {
             super();
@@ -149,11 +159,11 @@ public class BusRouteMap extends AppCompatActivity
 
         @Override
         protected NextBusApi.QueryResult<BusLocations> doInBackground(Void... params) {
-            return api.queryBusLocationsFor("sf-muni", busRoute.route);
+            return api.queryBusLocationsFor("sf-muni", busRoute.route, lastQueryTime);
         }
 
         public void updateLocationsAsynchronously() {
-            this.execute((Void)null);
+            this.execute((Void) null);
         }
 
         @Override
@@ -162,6 +172,7 @@ public class BusRouteMap extends AppCompatActivity
             if (routeResult.result == null) {
                 snackMessage = routeResult.failureMessage;
             } else {
+                lastQueryTime = routeResult.result.lastQueryTime();
                 busRoute.updateBusses(routeResult.result);
                 snackMessage = "Success! Route has " + routeResult.result.locations().size() + " locations!";
             }
@@ -243,6 +254,7 @@ public class BusRouteMap extends AppCompatActivity
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
+
     }
 
     @Override

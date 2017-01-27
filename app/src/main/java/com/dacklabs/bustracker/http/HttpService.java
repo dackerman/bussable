@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker;
+package com.dacklabs.bustracker.http;
 
 import android.util.Log;
 
@@ -13,6 +13,8 @@ public class HttpService {
     public String get(String urlString) throws IOException {
         URL url = new URL(urlString);
         Log.d("HttpService", "GET " + urlString);
-        return Resources.asCharSource(url, Charsets.UTF_8).read();
+        String response = Resources.asCharSource(url, Charsets.UTF_8).read();
+        Log.d("HttpService", "Response: " + response);
+        return response;
     }
 }

@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker;
+package com.dacklabs.bustracker.http;
 
 import android.util.Xml;
 
@@ -7,6 +7,11 @@ import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
 import com.dacklabs.bustracker.data.ImmutableBusLocation;
 import com.dacklabs.bustracker.data.ImmutableBusLocations;
+import com.dacklabs.bustracker.data.ImmutableBusRoute;
+import com.dacklabs.bustracker.data.ImmutablePathCoordinate;
+import com.dacklabs.bustracker.data.ImmutableRoutePath;
+import com.dacklabs.bustracker.data.PathCoordinate;
+import com.dacklabs.bustracker.data.RoutePath;
 import com.google.common.collect.ImmutableMap;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -44,9 +49,14 @@ public class NextBusApi {
         this.http = http;
     }
 
-    public QueryResult<BusLocations> queryBusLocationsFor(String provider, String route) {
+    public QueryResult<BusLocations> queryBusLocationsFor(String provider, String route, String lastQueryTime) {
         try {
-            String response = nextBusCall("vehicleLocations", ImmutableMap.of("a", provider, "r", route));
+            ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+            params.put("a", provider).put("r", route);
+            if (lastQueryTime != null) {
+                params.put("t", lastQueryTime);
+            }
+            String response = nextBusCall("vehicleLocations", params.build());
             BusLocations busRoute = toBusLocations(response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {
@@ -78,15 +88,21 @@ public class NextBusApi {
             switch (parser.next()) {
                 case XmlPullParser.START_TAG:
                     if (parser.getName().equals("vehicle")) {
+
+                        String dirTag = parser.getAttributeValue(parser.getNamespace(), "dirTag");
+                        Direction direction = (dirTag != null && dirTag.contains("O")) ? Direction.OUTBOUND : Direction.INBOUND;
                         ImmutableBusLocation location = ImmutableBusLocation.builder()
                                 .vehicleId(parser.getAttributeValue(parser.getNamespace(), "id"))
-                                .direction(parser.getAttributeValue(parser.getNamespace(), "dirTag").contains("O") ? Direction.OUTBOUND : Direction.INBOUND)
+                                .direction(direction)
                                 .latitude(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "lat")))
                                 .longitude(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "lon")))
                                 .speedInKph(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "speedKmHr")))
                                 .heading(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "heading")))
                                 .build();
-                        locationsBuilder.route(parser.getAttributeValue(parser.getNamespace(), "routeTag"));
+                        String routeTag = parser.getAttributeValue(parser.getNamespace(), "routeTag");
+                        if (routeTag != null) {
+                            locationsBuilder.route(routeTag);
+                        }
                         locationsBuilder.addLocations(location);
                     } else if (parser.getName().equals("lastTime")) {
                         locationsBuilder.lastQueryTime(parser.getAttributeValue(parser.getNamespace(), "time"));
@@ -101,30 +117,36 @@ public class NextBusApi {
 
     private BusRoute toBusRoute(String response) throws IOException, XmlPullParserException {
         String routeName = "";
-        List<BusRoute.RoutePath> paths = new ArrayList<>();
-        BusRoute.RoutePath currentPath = new BusRoute.RoutePath();
+        List<RoutePath> paths = new ArrayList<>();
+        ImmutableRoutePath.Builder currentPath = null;
 
         XmlPullParser parser = Xml.newPullParser();
         parser.setInput(new StringReader(response));
+
         loop: while (true) {
             switch (parser.next()) {
                 case XmlPullParser.START_TAG:
                     if (parser.getName().equals("route")) {
                         routeName = parser.getAttributeValue(parser.getNamespace(), "title");
                     } else if (parser.getName().equals("path")) {
-                        currentPath = new BusRoute.RoutePath();
-                        paths.add(currentPath);
+                        if (currentPath != null) {
+                            paths.add(currentPath.build());
+                        }
+                        currentPath = ImmutableRoutePath.builder();
                     } else if (parser.getName().equals("point")) {
                         float lat = Float.parseFloat(parser.getAttributeValue(parser.getNamespace(), "lat"));
                         float lon = Float.parseFloat(parser.getAttributeValue(parser.getNamespace(), "lon"));
-                        currentPath.coordinates.add(new BusRoute.PathCoordinate(lat, lon));
+                        currentPath.addCoordinates(ImmutablePathCoordinate.of(lat, lon));
                     }
                     break;
                 case XmlPullParser.END_DOCUMENT:
+                    if (currentPath != null) {
+                        paths.add(currentPath.build());
+                    }
                     break loop;
             }
         }
-        return new BusRoute(routeName, paths);
+        return ImmutableBusRoute.of(routeName, paths);
     }
 
     private String nextBusCall(String command, Map<String, String> params) throws IOException {
