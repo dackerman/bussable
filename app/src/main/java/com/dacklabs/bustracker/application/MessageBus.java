@@ -27,22 +27,24 @@ public final class MessageBus<T> {
         this.exceptionToMessage = exceptionToMessage;
     }
 
-    public void handle(T value) {
+    public void fire(T value) {
         deque.add(value);
     }
 
     public void startProcessingMessages() {
+        log("starting to process messages...");
         shouldStop = false;
         while (true) {
             final T message;
             try {
+                log("Waiting for next message...");
                 message = deque.takeFirst();
             } catch (InterruptedException e) {
                 log("Interrupted! " + e.getMessage());
                 deque.addLast(exceptionToMessage.toMessage(e));
                 continue;
             }
-            log("Processing message " + message.getClass().getCanonicalName());
+            log("Processing message " + message);
 
             boolean didProcess = false;
             for (Class handlerClass : dispatch.keySet()) {
@@ -66,6 +68,7 @@ public final class MessageBus<T> {
     }
 
     public void stopProcessingMessages() {
+        log("stopProcessingMessages called! Stopping");
         shouldStop = true;
     }
 

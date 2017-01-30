@@ -3,6 +3,7 @@ package com.dacklabs.bustracker.http;
 import android.util.Xml;
 
 import com.dacklabs.bustracker.application.requests.QueryBusLocations;
+import com.dacklabs.bustracker.application.requests.QueryBusRoute;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
@@ -49,9 +50,10 @@ public class NextBusApi {
         }
     }
 
-    public QueryResult<BusRoute> queryBusRouteFor(String provider, String route) {
+    public QueryResult<BusRoute> queryBusRouteFor(QueryBusRoute query) {
         try {
-            String response = nextBusCall("routeConfig", ImmutableMap.of("a", provider, "r", route));
+            String response = nextBusCall("routeConfig", ImmutableMap.of(
+                    "a", query.provider(), "r", query.route()));
             BusRoute busRoute = toBusRoute(response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {

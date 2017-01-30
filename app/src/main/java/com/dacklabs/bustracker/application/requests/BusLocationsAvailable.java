@@ -5,7 +5,7 @@ import com.dacklabs.bustracker.data.BusLocations;
 import org.immutables.value.Value;
 
 @Value.Immutable
-public abstract class BusLocationsAvailable {
+public abstract class BusLocationsAvailable implements Message {
     @Value.Parameter
     public abstract BusLocations locations();
 }

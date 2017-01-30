@@ -4,7 +4,7 @@ import android.Manifest;
 import android.os.Bundle;
 
 import com.dacklabs.bustracker.R;
-import com.dacklabs.bustracker.application.requests.BusLocationsUpdated;
+import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.mapbox.MapBoxRouteUIElements;
@@ -45,9 +45,9 @@ final class MapBoxUI {
         this.mapView = Optional.of(mapView);
     }
 
-    public Set<Message> onBusLocationsUpdated(BusLocationsUpdated locationsUpdated) {
+    public Set<Message> onBusLocationsUpdated(BusLocationsAvailable locationsUpdated) {
         ifPresent(elements, e ->
-                activity.runOnUiThread(() -> e.updateBusses(locationsUpdated.busses())));
+                activity.runOnUiThread(() -> e.updateBusses(locationsUpdated.locations())));
         return Message.NONE;
     }
 
