@@ -2,6 +2,7 @@ package com.dacklabs.bustracker.http;
 
 import android.util.Xml;
 
+import com.dacklabs.bustracker.application.requests.QueryBusLocations;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
@@ -10,7 +11,6 @@ import com.dacklabs.bustracker.data.ImmutableBusLocations;
 import com.dacklabs.bustracker.data.ImmutableBusRoute;
 import com.dacklabs.bustracker.data.ImmutablePathCoordinate;
 import com.dacklabs.bustracker.data.ImmutableRoutePath;
-import com.dacklabs.bustracker.data.PathCoordinate;
 import com.dacklabs.bustracker.data.RoutePath;
 import com.google.common.collect.ImmutableMap;
 
@@ -25,37 +25,18 @@ import java.util.Map;
 
 public class NextBusApi {
 
-    public static class QueryResult<T> {
-        public final T result;
-        public final String failureMessage;
-
-        private QueryResult(T value, String message) {
-            this.result = value;
-            this.failureMessage = message;
-        }
-
-        public static <A> QueryResult<A> success(A value) {
-            return new QueryResult<>(value, null);
-        }
-
-        public static <A> QueryResult<A> failure(String failureMessage) {
-            return new QueryResult<>(null, failureMessage);
-        }
-    }
-
     private final HttpService http;
 
     public NextBusApi(HttpService http) {
         this.http = http;
     }
 
-    public QueryResult<BusLocations> queryBusLocationsFor(String provider, String route, String lastQueryTime) {
+    public QueryResult<BusLocations> queryBusLocationsFor(QueryBusLocations query) {
         try {
             ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
-            params.put("a", provider).put("r", route);
-            if (lastQueryTime != null) {
-                params.put("t", lastQueryTime);
-            }
+            params.put("a", query.provider()).put("r", query.route());
+            query.lastQueryTime().ifPresent(lqt -> params.put("t", lqt));
+
             String response = nextBusCall("vehicleLocations", params.build());
             BusLocations busRoute = toBusLocations(response);
             return QueryResult.success(busRoute);
@@ -103,7 +84,7 @@ public class NextBusApi {
                         if (routeTag != null) {
                             locationsBuilder.route(routeTag);
                         }
-                        locationsBuilder.addLocations(location);
+                        locationsBuilder.putLocations(location.vehicleId(), location);
                     } else if (parser.getName().equals("lastTime")) {
                         locationsBuilder.lastQueryTime(parser.getAttributeValue(parser.getNamespace(), "time"));
                     }

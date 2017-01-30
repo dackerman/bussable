@@ -1,16 +1,18 @@
 apply plugin: 'com.android.application'
-apply plugin: "android-apt"
 
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.dacklabs.bustracker"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions {
+            enabled true
+        }
     }
     buildTypes {
         release {
@@ -18,11 +20,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    apt "org.immutables:value:2.4.0" // <-- for annotation processor
+
+    compile 'com.squareup.okhttp3:okhttp:3.5.0'
+    annotationProcessor "org.immutables:value:2.4.0" // <-- for annotation processor
     provided "org.immutables:value:2.4.0" // <-- for annotation API
     provided "org.immutables:builder:2.4.0" // for annotations
     compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.1@aar'){
@@ -35,5 +43,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.android.support:support-v4:25.1.0'
     compile 'com.android.support:design:25.1.0'
+
     testCompile 'junit:junit:4.12'
+    testCompile 'com.squareup.okhttp3:mockwebserver:3.5.0'
 }

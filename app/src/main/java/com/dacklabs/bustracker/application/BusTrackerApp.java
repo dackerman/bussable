@@ -9,10 +9,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class BusTrackerApp {
 
     private final BusApi busApi;
+    private final Clock timer;
     private MapState state = MapState.empty();
 
-    public BusTrackerApp(BusApi busApi) {
+    public BusTrackerApp(BusApi busApi, Clock timer) {
         this.busApi = busApi;
+        this.timer = timer;
     }
 
     public MapState mapState() {

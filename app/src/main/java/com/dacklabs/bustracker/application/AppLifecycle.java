@@ -1,6 +1,6 @@
 package com.dacklabs.bustracker.application;
 
-interface AppLifecycle {
+public interface AppLifecycle {
     void create();
     void start();
     void resume();
