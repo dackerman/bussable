@@ -1,8 +1,8 @@
 package com.dacklabs.bustracker.application.requests;
 
-import org.immutables.value.Value;
+import com.google.common.base.Optional;
 
-import java.util.Optional;
+import org.immutables.value.Value;
 
 @Value.Immutable
 public abstract class QueryBusLocations implements Message {

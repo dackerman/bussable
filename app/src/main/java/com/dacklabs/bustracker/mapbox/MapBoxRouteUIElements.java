@@ -4,7 +4,9 @@ import com.dacklabs.bustracker.data.BusLocation;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
+import com.dacklabs.bustracker.data.PathCoordinate;
 import com.dacklabs.bustracker.data.RoutePath;
+import com.dacklabs.bustracker.util.Supplier;
 import com.google.gson.JsonObject;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.style.layers.Layer;
@@ -24,8 +26,6 @@ import com.mapbox.services.commons.models.Position;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
@@ -40,12 +40,14 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
 
     @Override
     public void updateBusses(BusLocations busses) {
-        getSourceFor(busses.route()).setGeoJson(fromBusLocations(busses));
+        initRoute(busses.route());
+        getSourceFor(locationId(busses.route())).setGeoJson(fromBusLocations(busses));
     }
 
     @Override
     public void updateRoute(BusRoute route) {
-        getSourceFor(route.routeName()).setGeoJson(fromBusRoute(route));
+        initRoute(route.routeName());
+        getSourceFor(routeId(route.routeName())).setGeoJson(fromBusRoute(route));
     }
 
     @Override
@@ -60,10 +62,10 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     private FeatureCollection fromBusLocations(BusLocations busses) {
         List<Feature> features = new ArrayList<>();
         Map<String, BusLocation> locations = busses.locations();
-        for (String route : locations.keySet()) {
-            BusLocation location = locations.get(route);
+        for (String busIdentifier : locations.keySet()) {
+            BusLocation location = locations.get(busIdentifier);
             String formattedTitle = String.format("%s-%s (%s)",
-                    route, location.vehicleId(), location.direction().toString().toLowerCase());
+                    busses.route(), location.vehicleId(), location.direction().toString().toLowerCase());
             String color = location.direction().equals(Direction.INBOUND) ? "#00f" : "#ff0";
 
             JsonObject props = new JsonObject();
@@ -79,17 +81,17 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     private FeatureCollection fromBusRoute(BusRoute route) {
         List<Feature> features = new ArrayList<>();
         for (RoutePath path : route.paths()) {
-            List<Position> coordinates = path.coordinates().stream()
-                    .map(coord -> Position.fromCoordinates(coord.lon(), coord.lat()))
-                    .collect(Collectors.toList());
+            List<Position> coordinates = new ArrayList<>();
+            for (PathCoordinate coord : path.coordinates()) {
+                coordinates.add(Position.fromCoordinates(coord.lon(), coord.lat()));
+            }
             features.add(Feature.fromGeometry(LineString.fromCoordinates(coordinates)));
         }
         return FeatureCollection.fromFeatures(features);
     }
 
-    private GeoJsonSource getSourceFor(String routeName) {
-        initRoute(routeName);
-        return map.getSourceAs(routeId(routeName));
+    private GeoJsonSource getSourceFor(String id) {
+        return map.getSourceAs(id);
     }
 
     private String locationId(String routeName) {

@@ -24,7 +24,9 @@ public class HttpService {
     public void cancelInFlightRequests() {
         synchronized (inFlightRequests) {
             isCanceled = true;
-            inFlightRequests.stream().forEach(Call::cancel);
+            for (Call request : inFlightRequests) {
+                request.cancel();
+            }
         }
     }
 

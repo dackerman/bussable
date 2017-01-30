@@ -35,7 +35,9 @@ public class NextBusApi {
         try {
             ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
             params.put("a", query.provider()).put("r", query.route());
-            query.lastQueryTime().ifPresent(lqt -> params.put("t", lqt));
+            if (query.lastQueryTime().isPresent()) {
+                params.put("t", query.lastQueryTime().get());
+            }
 
             String response = nextBusCall("vehicleLocations", params.build());
             BusLocations busRoute = toBusLocations(response);

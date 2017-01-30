@@ -8,12 +8,13 @@ import com.dacklabs.bustracker.application.requests.BusLocationsUpdated;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.mapbox.MapBoxRouteUIElements;
+import com.dacklabs.bustracker.util.Consumer;
+import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 final class MapBoxUI {
@@ -45,32 +46,40 @@ final class MapBoxUI {
     }
 
     public Set<Message> onBusLocationsUpdated(BusLocationsUpdated locationsUpdated) {
-        this.elements.ifPresent(e -> e.updateBusses(locationsUpdated.busses()));
+        ifPresent(elements, e ->
+                activity.runOnUiThread(() -> e.updateBusses(locationsUpdated.busses())));
         return Message.NONE;
     }
 
     public Set<Message> onBusRouteUpdated(BusRouteUpdated routeUpdated) {
-        this.elements.ifPresent(e -> e.updateRoute(routeUpdated.route()));
+        ifPresent(elements, e ->
+                activity.runOnUiThread(() -> e.updateRoute(routeUpdated.route())));
         return Message.NONE;
     }
 
     public void onResume() {
-        this.mapView.ifPresent(MapView::onResume);
+        ifPresent(mapView, MapView::onResume);
     }
 
     public void onPause() {
-        this.mapView.ifPresent(MapView::onPause);
+        ifPresent(mapView, MapView::onPause);
     }
 
     public void onDestroy() {
-        this.mapView.ifPresent(MapView::onDestroy);
+        ifPresent(mapView, MapView::onDestroy);
     }
 
     public void onSaveInstanceState(Bundle outState) {
-        this.mapView.ifPresent(mv -> mv.onSaveInstanceState(outState));
+        ifPresent(mapView, mv -> mv.onSaveInstanceState(outState));
     }
 
     public void onLowMemory() {
-        this.mapView.ifPresent(MapView::onLowMemory);
+        ifPresent(mapView, MapView::onLowMemory);
+    }
+
+    private <T> void ifPresent(Optional<T> opt, Consumer<T> cons) {
+        if (opt != null && opt.isPresent()) {
+            cons.accept(opt.get());
+        }
     }
 }

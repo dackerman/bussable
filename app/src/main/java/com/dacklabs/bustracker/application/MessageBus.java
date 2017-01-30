@@ -5,19 +5,25 @@ import android.util.Log;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.function.Function;
 
 public final class MessageBus<T> {
 
-    private final Function<Throwable, T> exceptionToMessage;
-    private Multimap<Class, Function> dispatch = ArrayListMultimap.create();
+    public interface ExceptionToMessage<T> {
+        T toMessage(Throwable e);
+    }
+
+    public interface MessageHandler<A, T> {
+        Set<T> handle(A message);
+    }
+
+    private final ExceptionToMessage<T> exceptionToMessage;
+    private Multimap<Class, MessageHandler> dispatch = ArrayListMultimap.create();
     private LinkedBlockingDeque<T> deque = new LinkedBlockingDeque<>();
     private volatile boolean shouldStop;
 
-    public MessageBus(Function<Throwable, T> exceptionToMessage) {
+    public MessageBus(ExceptionToMessage<T> exceptionToMessage) {
         this.exceptionToMessage = exceptionToMessage;
     }
 
@@ -33,17 +39,25 @@ public final class MessageBus<T> {
                 message = deque.takeFirst();
             } catch (InterruptedException e) {
                 log("Interrupted! " + e.getMessage());
-                deque.addLast(exceptionToMessage.apply(e));
+                deque.addLast(exceptionToMessage.toMessage(e));
                 continue;
             }
             log("Processing message " + message.getClass().getCanonicalName());
-            Collection<Function> functions = dispatch.get(message.getClass());
-            for (Function<T, Set<T>> handler : functions) {
-                deque.addAll(handler.apply(message));
+
+            boolean didProcess = false;
+            for (Class handlerClass : dispatch.keySet()) {
+                if (handlerClass.isAssignableFrom(message.getClass())) {
+                    for (MessageHandler handler : dispatch.get(handlerClass)) {
+                        deque.addAll(handler.handle(message));
+                        didProcess = true;
+                    }
+                }
             }
-            if (functions.isEmpty()) {
+
+            if (!didProcess) {
                 log("No consumers for event " + message.getClass().getCanonicalName());
             }
+
             if (shouldStop) {
                 log("Stopping processing messages");
                 break;
@@ -55,7 +69,7 @@ public final class MessageBus<T> {
         shouldStop = true;
     }
 
-    public <A extends T> void register(Class<A> cls, Function<A, Set<T>> value) {
+    public <A extends T> void register(Class<A> cls, MessageHandler<A, T> value) {
         dispatch.put(cls, value);
     }
 
