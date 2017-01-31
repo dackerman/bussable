@@ -15,6 +15,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.dacklabs.bustracker.R;
+import com.dacklabs.bustracker.application.requests.ImmutableAddRouteRequest;
+import com.dacklabs.bustracker.application.requests.ImmutableRemoveRouteRequest;
 
 import java.util.ArrayList;
 
@@ -99,29 +101,38 @@ public class BusRouteMapActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private boolean number10Selected;
+    private boolean number47Selected;
+    private boolean number19Selected;
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.toggle_10) {
+            fireFor(number10Selected, "10");
+            number10Selected = !number10Selected;
+        } else if (id == R.id.toggle_47) {
+            fireFor(number47Selected, "47");
+            number47Selected = !number47Selected;
+        } else if (id == R.id.toggle_19) {
+            fireFor(number19Selected, "19");
+            number19Selected = !number19Selected;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void fireFor(boolean routeSelected, String route) {
+        if (routeSelected) {
+            main.fireEvent(ImmutableRemoveRouteRequest.of(route));
+        } else {
+            main.fireEvent(ImmutableAddRouteRequest.of(route));
+        }
     }
 
     @Override

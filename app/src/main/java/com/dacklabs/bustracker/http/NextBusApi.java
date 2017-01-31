@@ -112,7 +112,7 @@ public class NextBusApi {
             switch (parser.next()) {
                 case XmlPullParser.START_TAG:
                     if (parser.getName().equals("route")) {
-                        routeName = parser.getAttributeValue(parser.getNamespace(), "title");
+                        routeName = parser.getAttributeValue(parser.getNamespace(), "tag");
                     } else if (parser.getName().equals("path")) {
                         if (currentPath != null) {
                             paths.add(currentPath.build());

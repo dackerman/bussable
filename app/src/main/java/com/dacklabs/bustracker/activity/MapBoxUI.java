@@ -7,6 +7,7 @@ import com.dacklabs.bustracker.R;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.Message;
+import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.mapbox.MapBoxRouteUIElements;
 import com.dacklabs.bustracker.util.Consumer;
 import com.google.common.base.Optional;
@@ -28,7 +29,7 @@ final class MapBoxUI {
         this.activity = activity;
     }
 
-     public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         activity.requirePerms(Manifest.permission.ACCESS_NETWORK_STATE,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -39,7 +40,7 @@ final class MapBoxUI {
 
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(mapboxMap ->
-            this.elements = Optional.of(new MapBoxRouteUIElements(mapboxMap))
+                this.elements = Optional.of(new MapBoxRouteUIElements(mapboxMap))
         );
 
         this.mapView = Optional.of(mapView);
@@ -47,7 +48,7 @@ final class MapBoxUI {
 
     public Set<Message> onBusLocationsUpdated(BusLocationsAvailable locationsUpdated) {
         ifPresent(elements, e ->
-                activity.runOnUiThread(() -> e.updateBusses(locationsUpdated.locations())));
+                activity.runOnUiThread(() -> e.updateBusses(locationsUpdated)));
         return Message.NONE;
     }
 
@@ -55,6 +56,12 @@ final class MapBoxUI {
         ifPresent(elements, e ->
                 activity.runOnUiThread(() -> e.updateRoute(routeUpdated.route())));
         return Message.NONE;
+    }
+
+    public Set<Message> onBusRouteRemoved(RouteRemoved message) {
+        ifPresent(elements, e ->
+                activity.runOnUiThread(() -> e.removeRoute(message.routeNumber())));
+        return Sets.newHashSet();
     }
 
     public void onResume() {

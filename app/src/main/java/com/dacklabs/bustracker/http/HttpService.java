@@ -34,7 +34,7 @@ public class HttpService {
         Call call;
         synchronized (inFlightRequests) {
             if (isCanceled) {
-                Log.d("HttpService", "GET " + urlString);
+                log("GET " + urlString);
                 throw new IOException("Requests canceled");
             }
 
@@ -55,6 +55,6 @@ public class HttpService {
     }
 
     private void log(String message) {
-        Log.d("HttpService", message);
+        Log.d("DACK:HttpService", message);
     }
 }

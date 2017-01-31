@@ -1,7 +1,9 @@
 package com.dacklabs.bustracker.mapbox;
 
+import android.util.Log;
+
+import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusLocation;
-import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
 import com.dacklabs.bustracker.data.PathCoordinate;
@@ -39,7 +41,7 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     }
 
     @Override
-    public void updateBusses(BusLocations busses) {
+    public void updateBusses(BusLocationsAvailable busses) {
         initRoute(busses.route());
         getSourceFor(locationId(busses.route())).setGeoJson(fromBusLocations(busses));
     }
@@ -59,7 +61,7 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
         removeSource(routeId(routeName));
     }
 
-    private FeatureCollection fromBusLocations(BusLocations busses) {
+    private FeatureCollection fromBusLocations(BusLocationsAvailable busses) {
         List<Feature> features = new ArrayList<>();
         Map<String, BusLocation> locations = busses.locations();
         for (String busIdentifier : locations.keySet()) {
@@ -103,18 +105,22 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     }
 
     private void initRoute(String routeName) {
+        initLineLayer(routeId(routeName),
+                lineCap("round"),
+                lineColor("#000"),
+                lineWidth(2f));
+
         initSymbolLayer(locationId(routeName),
                 PropertyFactory.iconImage("bus-15"),
-                PropertyFactory.iconColor("{busColor}"),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.textAllowOverlap(true),
+//                PropertyFactory.iconColor("{busColor}"),
+                PropertyFactory.fillColor("{busColor}"),
                 PropertyFactory.textField("{title}"),
+                PropertyFactory.iconSize(1f),
                 PropertyFactory.textFont(new String[]{"Open Sans Semibold", "Arial Unicode MS Bold"}),
                 PropertyFactory.textOffset(new Float[]{0f, 0.6f}),
                 PropertyFactory.textAnchor("top"));
-
-        initLineLayer(routeId(routeName),
-                lineCap("round"),
-                lineColor("#f00"),
-                lineWidth(4f));
     }
 
     private void initLineLayer(String id, Property<?>... properties) {
@@ -127,9 +133,11 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
 
     private void initRoute(String id, Supplier<Layer> layerCreator, Property<?>... properties) {
         if (map.getSource(id) == null) {
+            log("creating source " + id);
             map.addSource(new GeoJsonSource(id));
         }
         if (map.getLayer(id) == null) {
+            log("creating layer " + id);
             Layer layer = layerCreator.get();
             layer.setProperties(properties);
             map.addLayer(layer);
@@ -137,20 +145,30 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     }
 
     private void removeLayer(String id) {
+        log("attempting to remove layer " + id);
         if (map.getLayer(id) != null) {
+            log("layer exists, removing " + id);
             try {
                 map.removeLayer(id);
             } catch (NoSuchLayerException e) {
+                log("Exception while removing layer " + id + " " + e.getMessage());
                 // shouldn't happen
             }
         }
     }
 
+    private void log(String message) {
+        Log.d("DACK:MapElements", message);
+    }
+
     private void removeSource(String id) {
+        log("attempting to remove source " + id);
         if (map.getSource(id) != null) {
+            log("source exists, removing " + id);
             try {
                 map.removeSource(id);
             } catch (NoSuchSourceException e) {
+                log("Exception while removing source " + id + " " + e.getMessage());
                 // shouldn't happen
             }
         }
