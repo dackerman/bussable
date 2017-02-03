@@ -57,7 +57,7 @@ public class NextBusApi {
         try {
             String response = nextBusCall("routeConfig", ImmutableMap.of(
                     "a", query.provider(), "r", query.route().displayName()));
-            BusRoute busRoute = toBusRoute(response);
+            BusRoute busRoute = toBusRoute(query.route(), response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {
             return QueryResult.failure(e.getMessage());
@@ -103,8 +103,8 @@ public class NextBusApi {
         return locationsBuilder.build();
     }
 
-    private BusRoute toBusRoute(String response) throws IOException, XmlPullParserException {
-        RouteName routeName = ImmutableRouteName.of("");
+    private BusRoute toBusRoute(RouteName routeName, String response) throws IOException,
+            XmlPullParserException {
         List<RoutePath> paths = new ArrayList<>();
         ImmutableRoutePath.Builder currentPath = null;
 
@@ -114,10 +114,7 @@ public class NextBusApi {
         loop: while (true) {
             switch (parser.next()) {
                 case XmlPullParser.START_TAG:
-                    if (parser.getName().equals("route")) {
-                        routeName = ImmutableRouteName.of(parser.getAttributeValue(parser
-                                .getNamespace(), "tag"));
-                    } else if (parser.getName().equals("path")) {
+                    if (parser.getName().equals("path")) {
                         if (currentPath != null) {
                             paths.add(currentPath.build());
                         }
