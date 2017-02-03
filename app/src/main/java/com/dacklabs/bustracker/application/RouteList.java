@@ -41,9 +41,14 @@ public final class RouteList {
     }
 
     public void save(Storage storage) {
-        log("Saving RouteList to storage");
-        storage.write("routelist", Joiner.on(",").join(
-                Iterables.transform(routes, RouteName::displayName)));
+        String serialized = serialize();
+        log("Saving RouteList to storage: " + serialized);
+        storage.write("routelist", serialized);
+    }
+
+    private String serialize() {
+        return Joiner.on(",").join(
+                Iterables.transform(routes, RouteName::displayName));
     }
 
     public void load(Storage storage) {
@@ -54,6 +59,7 @@ public final class RouteList {
                 routes.add(ImmutableRouteName.of(name));
             }
         }
+        log("After loading from storage, routes are now " + serialize());
     }
 
     public Iterable<RouteName> routes() {

@@ -8,11 +8,6 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 public abstract class MapState {
-
-    public static MapState empty() {
-        return ImmutableMapState.builder().build();
-    }
-
     public abstract ImmutableList<BusLocations> busLocations();
     public abstract ImmutableList<BusRoute> routes();
 }

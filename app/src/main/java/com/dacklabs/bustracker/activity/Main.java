@@ -67,13 +67,13 @@ final class Main implements ActivityLifecycle {
     @Override
     public void onStart() {
         log("onStart");
+        executor.execute(dataSyncProcess::startSyncingProcess);
     }
 
     @Override
     public void onResume() {
         log("onResume");
         ui.onResume();
-        executor.execute(dataSyncProcess::startSyncingProcess);
     }
 
     @Override

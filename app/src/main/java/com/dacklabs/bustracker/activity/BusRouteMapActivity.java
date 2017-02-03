@@ -137,6 +137,12 @@ public class BusRouteMapActivity extends AppCompatActivity
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        main.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         main.onResume();
@@ -146,6 +152,18 @@ public class BusRouteMapActivity extends AppCompatActivity
     public void onPause() {
         super.onPause();
         main.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        main.onStop();
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+        main.onRestart();
     }
 
     @Override
