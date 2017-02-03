@@ -56,7 +56,7 @@ final class MapBoxUI implements RouteDatabase.Listener {
     @Override
     public void onBusRouteRemoved(RouteRemoved message) {
         ifPresent(elements, e ->
-                activity.runOnUiThread(() -> e.removeRoute(message.routeNumber())));
+                activity.runOnUiThread(() -> e.removeRoute(message.routeName())));
     }
 
     public void onResume() {

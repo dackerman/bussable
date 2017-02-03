@@ -46,8 +46,8 @@ public class MapBoxRouteUIElements implements BusRouteUIElements {
 
     @Override
     public void updateBusses(BusLocationsAvailable busses) {
-        initRoute(busses.route());
-        getSourceFor(locationId(busses.route())).setGeoJson(fromBusLocations(busses));
+        initRoute(busses.routeName());
+        getSourceFor(locationId(busses.routeName())).setGeoJson(fromBusLocations(busses));
     }
 
     @Override
@@ -71,7 +71,8 @@ public class MapBoxRouteUIElements implements BusRouteUIElements {
         for (String busIdentifier : locations.keySet()) {
             BusLocation location = locations.get(busIdentifier);
             String formattedTitle = String.format("%s-%s (%s)",
-                    busses.route(), location.vehicleId(), location.direction().toString().toLowerCase());
+                    busses.routeName().displayName(), location.vehicleId(), location.direction().toString()
+                            .toLowerCase());
             String color = location.direction().equals(Direction.INBOUND) ? "#00f" : "#ff0";
 
             JsonObject props = new JsonObject();

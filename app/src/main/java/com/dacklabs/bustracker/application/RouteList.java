@@ -28,17 +28,17 @@ public final class RouteList {
 
     @Subscribe
     public void requestRoute(AddRouteRequest request) {
-        log("adding route to RouteList " + request.routeNumber().displayName());
-        if (routes.add(request.routeNumber())) {
-            eventBus.post(ImmutableRouteAdded.of(request.routeNumber()));
+        log("adding route to RouteList " + request.routeName().displayName());
+        if (routes.add(request.routeName())) {
+            eventBus.post(ImmutableRouteAdded.of(request.routeName()));
         }
     }
 
     @Subscribe
     public void removeRoute(RemoveRouteRequest request) {
-        log("removing route from routeList " + request.routeNumber().displayName());
-        if (routes.remove(request.routeNumber())) {
-            eventBus.post(ImmutableRouteRemoved.of(request.routeNumber()));
+        log("removing route from routeList " + request.routeName().displayName());
+        if (routes.remove(request.routeName())) {
+            eventBus.post(ImmutableRouteRemoved.of(request.routeName()));
         }
     }
 

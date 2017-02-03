@@ -37,13 +37,13 @@ public class NextBusApi {
     public QueryResult<BusLocations> queryBusLocationsFor(QueryBusLocations query) {
         try {
             ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
-            params.put("a", query.provider()).put("r", query.route().displayName());
+            params.put("a", query.provider()).put("r", query.routeName().displayName());
             if (query.lastQueryTime().isPresent()) {
                 params.put("t", query.lastQueryTime().get());
             }
 
             String response = nextBusCall("vehicleLocations", params.build());
-            BusLocations busRoute = toBusLocations(query.route(), response);
+            BusLocations busRoute = toBusLocations(query.routeName(), response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {
             return QueryResult.failure(e.getMessage());
@@ -55,8 +55,8 @@ public class NextBusApi {
     public QueryResult<BusRoute> queryBusRouteFor(QueryBusRoute query) {
         try {
             String response = nextBusCall("routeConfig", ImmutableMap.of(
-                    "a", query.provider(), "r", query.route().displayName()));
-            BusRoute busRoute = toBusRoute(query.route(), response);
+                    "a", query.provider(), "r", query.routeName().displayName()));
+            BusRoute busRoute = toBusRoute(query.routeName(), response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {
             return QueryResult.failure(e.getMessage());
