@@ -2,9 +2,8 @@ package com.dacklabs.bustracker.http;
 
 import android.util.Xml;
 
-import com.dacklabs.bustracker.application.ImmutableRouteName;
 import com.dacklabs.bustracker.application.QueryResult;
-import com.dacklabs.bustracker.application.RouteName;
+import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.application.requests.QueryBusLocations;
 import com.dacklabs.bustracker.application.requests.QueryBusRoute;
 import com.dacklabs.bustracker.data.BusLocations;
@@ -44,7 +43,7 @@ public class NextBusApi {
             }
 
             String response = nextBusCall("vehicleLocations", params.build());
-            BusLocations busRoute = toBusLocations(response);
+            BusLocations busRoute = toBusLocations(query.route(), response);
             return QueryResult.success(busRoute);
         } catch (IOException e) {
             return QueryResult.failure(e.getMessage());
@@ -66,11 +65,12 @@ public class NextBusApi {
         }
     }
 
-    private BusLocations toBusLocations(String response) throws IOException, XmlPullParserException {
+    private BusLocations toBusLocations(RouteName routeName, String response) throws IOException, XmlPullParserException {
         ImmutableBusLocations.Builder locationsBuilder = ImmutableBusLocations.builder();
 
         XmlPullParser parser = Xml.newPullParser();
         parser.setInput(new StringReader(response));
+        locationsBuilder.routeName(routeName);
 
         loop: while (true) {
             switch (parser.next()) {
@@ -87,10 +87,6 @@ public class NextBusApi {
                                 .speedInKph(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "speedKmHr")))
                                 .heading(Double.parseDouble(parser.getAttributeValue(parser.getNamespace(), "heading")))
                                 .build();
-                        String routeTag = parser.getAttributeValue(parser.getNamespace(), "routeTag");
-                        if (routeTag != null) {
-                            locationsBuilder.route(ImmutableRouteName.of(routeTag));
-                        }
                         locationsBuilder.putLocations(location.vehicleId(), location);
                     } else if (parser.getName().equals("lastTime")) {
                         locationsBuilder.lastQueryTime(parser.getAttributeValue(parser.getNamespace(), "time"));

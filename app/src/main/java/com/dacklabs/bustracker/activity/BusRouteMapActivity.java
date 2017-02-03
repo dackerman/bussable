@@ -15,9 +15,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.dacklabs.bustracker.R;
-import com.dacklabs.bustracker.application.ImmutableRouteName;
 import com.dacklabs.bustracker.application.requests.ImmutableAddRouteRequest;
 import com.dacklabs.bustracker.application.requests.ImmutableRemoveRouteRequest;
+import com.dacklabs.bustracker.data.ImmutableRouteName;
 
 import java.util.ArrayList;
 

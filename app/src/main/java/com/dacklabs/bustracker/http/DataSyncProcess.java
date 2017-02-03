@@ -5,7 +5,7 @@ import android.util.Log;
 import com.dacklabs.bustracker.application.QueryResult;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
-import com.dacklabs.bustracker.application.RouteName;
+import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.application.requests.ImmutableQueryBusLocations;
 import com.dacklabs.bustracker.application.requests.ImmutableQueryBusRoute;
 import com.dacklabs.bustracker.data.BusLocations;

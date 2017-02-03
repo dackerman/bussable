@@ -1,6 +1,5 @@
 package com.dacklabs.bustracker.data;
 
-import com.dacklabs.bustracker.application.RouteName;
 import com.google.common.collect.ImmutableList;
 
 import org.immutables.value.Value;

@@ -9,6 +9,7 @@ import com.dacklabs.bustracker.application.requests.ImmutableBusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.collect.Sets;
 
 import java.util.Set;
@@ -45,11 +46,11 @@ public final class RouteDatabase {
     }
 
     public void updateLocations(BusLocations newLocations) {
-        log("Updating locations in database " + newLocations.route().displayName());
-        locations.put(newLocations.route(), newLocations);
+        log("Updating locations in database " + newLocations.routeName().displayName());
+        locations.put(newLocations.routeName(), newLocations);
         for (Listener listener : listeners) {
             listener.onBusLocationsUpdated(ImmutableBusLocationsAvailable.of(
-                    newLocations.route(), newLocations.locations()));
+                    newLocations.routeName(), newLocations.locations()));
         }
 
     }

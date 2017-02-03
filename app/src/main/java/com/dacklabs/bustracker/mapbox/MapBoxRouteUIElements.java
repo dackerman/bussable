@@ -3,7 +3,7 @@ package com.dacklabs.bustracker.mapbox;
 import android.util.Log;
 
 import com.dacklabs.bustracker.application.BusRouteUIElements;
-import com.dacklabs.bustracker.application.RouteName;
+import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusLocation;
 import com.dacklabs.bustracker.data.BusRoute;
