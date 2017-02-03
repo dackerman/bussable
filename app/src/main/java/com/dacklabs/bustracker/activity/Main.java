@@ -3,111 +3,65 @@ package com.dacklabs.bustracker.activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.dacklabs.bustracker.application.BusLocationCache;
-import com.dacklabs.bustracker.application.MessageBus;
+import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
-import com.dacklabs.bustracker.application.requests.AddRouteRequest;
-import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
-import com.dacklabs.bustracker.application.requests.BusLocationsUpdated;
-import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.ImmutableBusLocationsUpdated;
-import com.dacklabs.bustracker.application.requests.ImmutableBusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.ImmutableExceptionMessage;
-import com.dacklabs.bustracker.application.requests.ImmutableQueryBusLocations;
-import com.dacklabs.bustracker.application.requests.ImmutableQueryBusRoute;
 import com.dacklabs.bustracker.application.requests.Message;
-import com.dacklabs.bustracker.application.requests.QueryBusLocations;
-import com.dacklabs.bustracker.application.requests.QueryBusRoute;
-import com.dacklabs.bustracker.application.requests.RemoveRouteRequest;
-import com.dacklabs.bustracker.application.requests.RouteAdded;
-import com.dacklabs.bustracker.application.requests.RouteRemoved;
-import com.dacklabs.bustracker.data.BusLocations;
-import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.http.DataSyncProcess;
 import com.dacklabs.bustracker.http.HttpService;
 import com.dacklabs.bustracker.http.NextBusApi;
-import com.dacklabs.bustracker.http.QueryResult;
-import com.google.common.base.Optional;
-import com.google.common.collect.Sets;
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
 final class Main implements ActivityLifecycle {
 
-    private MessageBus<Message> messageBus;
     private ScheduledExecutorService executor;
     private BusRouteMapActivity activity;
     private HttpService http;
     private MapBoxUI ui;
     private NextBusApi nextBusApi;
-    private ScheduledFuture<?> periodicUpdater;
     private RouteList routeList;
+    private AsyncEventBus eventBus;
+    private RouteDatabase db;
+    private DataSyncProcess dataSyncProcess;
+    private AndroidStorage storage;
 
     public void setActivity(BusRouteMapActivity busRouteMap) {
         this.activity = busRouteMap;
     }
 
-    public void fireEvent(Message message) {
-        messageBus.fire(message);
+    public void postMessage(Message message) {
+        eventBus.post(message);
     }
-
-    private final Map<String, String> lastLocations = new HashMap<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         log("onCreate");
         executor = Executors.newScheduledThreadPool(10);
-        messageBus = new MessageBus<>(e -> ImmutableExceptionMessage.of(e, e.getMessage()), executor);
-        executor.execute(messageBus::startProcessingMessages);
-        ui = new MapBoxUI(activity);
-        ui.onCreate(savedInstanceState);
-        messageBus.register(BusRouteUpdated.class, ui::onBusRouteUpdated);
-        messageBus.register(BusLocationsAvailable.class, ui::onBusLocationsUpdated);
-        messageBus.register(RouteRemoved.class, ui::onBusRouteRemoved);
+        eventBus = new AsyncEventBus("events", executor);
 
         http = new HttpService(new OkHttpClient());
         nextBusApi = new NextBusApi(http);
 
-        messageBus.register(RouteAdded.class, request -> Sets.newHashSet(
-                ImmutableQueryBusRoute.of("sf-muni", request.routeNumber())));
+        storage = new AndroidStorage(activity);
 
-        BusLocationCache busLocationCache = new BusLocationCache();
-        messageBus.register(BusLocationsUpdated.class, busLocationCache::storeNewLocations);
+        routeList = new RouteList(eventBus);
+        routeList.load(storage);
+        eventBus.register(routeList);
 
-        routeList = new RouteList();
-        messageBus.register(AddRouteRequest.class, routeList::requestRoute);
-        messageBus.register(RemoveRouteRequest.class, routeList::removeRoute);
+        db = new RouteDatabase();
 
-        messageBus.register(QueryBusLocations.class, (query) -> {
-            executor.execute(() -> {
-                QueryResult<BusLocations> result = nextBusApi.queryBusLocationsFor(query);
-                if (result.succeeded()) {
-                    lastLocations.put(result.result.route(), result.result.lastQueryTime());
-                    messageBus.fire(ImmutableBusLocationsUpdated.of(result.result));
-                } else {
-                    messageBus.fire(ImmutableExceptionMessage.of(null, result.failureMessage));
-                }
-            });
-            return Message.NONE;
-        });
+        dataSyncProcess = new DataSyncProcess(routeList, db, nextBusApi, new ExecutorProcessRunner(executor));
 
-        messageBus.register(QueryBusRoute.class, (query) -> {
-            executor.execute(() -> {
-                QueryResult<BusRoute> result = nextBusApi.queryBusRouteFor(query);
-                if (result.succeeded()) {
-                    messageBus.fire(ImmutableBusRouteUpdated.of(result.result));
-                } else {
-                    messageBus.fire(ImmutableExceptionMessage.of(null, result.failureMessage));
-                }
-            });
-            return Message.NONE;
-        });
+        ui = new MapBoxUI(activity);
+        ui.onCreate(savedInstanceState);
+        db.listen(ui);
     }
 
     @Override
@@ -119,27 +73,15 @@ final class Main implements ActivityLifecycle {
     public void onResume() {
         log("onResume");
         ui.onResume();
-
-        if (periodicUpdater == null || periodicUpdater.isDone() || periodicUpdater.isCancelled()) {
-            periodicUpdater = executor.scheduleAtFixedRate(() -> {
-                for (String route : routeList.routes()) {
-                    String lastQueryTime = String.valueOf(1000*60*60*5);
-                    if (lastLocations.containsKey(route)) {
-                        lastQueryTime = lastLocations.get(route);
-                    }
-                    log(String.format("Refreshing route for %s (t=%s)", route, lastQueryTime));
-                    messageBus.fire(ImmutableQueryBusLocations.of("sf-muni", route,
-                            Optional.of(lastQueryTime)));
-                }
-            }, 0, 5, TimeUnit.SECONDS);
-        }
+        executor.execute(dataSyncProcess::startSyncingProcess);
     }
 
     @Override
     public void onPause() {
         log("onPause");
         ui.onPause();
-        periodicUpdater.cancel(false);
+        routeList.save(storage);
+        dataSyncProcess.stopSyncing();
     }
 
     @Override
@@ -151,14 +93,12 @@ final class Main implements ActivityLifecycle {
     @Override
     public void onRestart() {
         log("onRestart");
-
     }
 
     @Override
     public void onDestroy() {
         log("onDestroy");
         ui.onDestroy();
-        messageBus.stopProcessingMessages();
         executor.shutdown();
     }
 
@@ -176,5 +116,19 @@ final class Main implements ActivityLifecycle {
 
     private void log(String message) {
         activity.runOnUiThread(() -> Log.d("DACK:Main App", message));
+    }
+
+    private static final class ExecutorProcessRunner implements DataSyncProcess.ProcessRunner {
+
+        private final ScheduledExecutorService executor;
+
+        private ExecutorProcessRunner(ScheduledExecutorService executor) {
+            this.executor = executor;
+        }
+
+        @Override
+        public ListenableFuture<?> execute(Runnable process) {
+            return MoreExecutors.listeningDecorator(executor).schedule(process, 0, TimeUnit.MILLISECONDS);
+        }
     }
 }

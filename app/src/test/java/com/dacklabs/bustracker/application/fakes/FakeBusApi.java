@@ -1,8 +1,11 @@
 package com.dacklabs.bustracker.application.fakes;
 
 import com.dacklabs.bustracker.application.BusApi;
+import com.dacklabs.bustracker.application.QueryResult;
+import com.dacklabs.bustracker.application.RouteName;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.util.Async;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -17,7 +20,7 @@ public final class FakeBusApi implements BusApi {
         private List<SettableFuture<T>> requests = new ArrayList<>();
         private List<ListenableFuture<T>> responses = new ArrayList<>();
 
-        public void provideValue(T value) {
+        synchronized void provideValue(T value) {
             if (requests.isEmpty()) {
                 responses.add(Futures.immediateFuture(value));
             } else {
@@ -25,7 +28,7 @@ public final class FakeBusApi implements BusApi {
             }
         }
 
-        public ListenableFuture<T> getValue() {
+        synchronized ListenableFuture<T> getValue() {
             if (responses.isEmpty()) {
                 SettableFuture<T> theFuture = SettableFuture.create();
                 requests.add(theFuture);
@@ -37,19 +40,19 @@ public final class FakeBusApi implements BusApi {
     }
 
 
-    private final Buffer<ApiResult<BusRoute>> routeBuffer = new Buffer<>();
-    private final Buffer<ApiResult<BusLocations>> locationBuffer = new Buffer<>();
+    private final Buffer<QueryResult<BusRoute>> routeBuffer = new Buffer<>();
+    private final Buffer<QueryResult<BusLocations>> locationBuffer = new Buffer<>();
 
     @Override
-    public ListenableFuture<ApiResult<BusRoute>> getRoute(String routeNumber) {
-        return routeBuffer.getValue();
+    public Async<QueryResult<BusRoute>> getRoute(RouteName routeNumber) {
+        return new Async<>(routeBuffer.getValue(), (a) -> null);
     }
 
     public void sendBusRouteResponse(BusRoute busRoute) {
-        routeBuffer.provideValue(new ApiResult<>(busRoute));
+        routeBuffer.provideValue(QueryResult.success(busRoute));
     }
 
     public void sendLocationResponse(BusLocations locations) {
-        locationBuffer.provideValue(new ApiResult<>(locations));
+        locationBuffer.provideValue(QueryResult.success(locations));
     }
 }

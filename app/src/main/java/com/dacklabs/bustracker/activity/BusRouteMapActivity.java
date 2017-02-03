@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.dacklabs.bustracker.R;
+import com.dacklabs.bustracker.application.ImmutableRouteName;
 import com.dacklabs.bustracker.application.requests.ImmutableAddRouteRequest;
 import com.dacklabs.bustracker.application.requests.ImmutableRemoveRouteRequest;
 
@@ -129,9 +130,9 @@ public class BusRouteMapActivity extends AppCompatActivity
 
     private void fireFor(boolean routeSelected, String route) {
         if (routeSelected) {
-            main.fireEvent(ImmutableRemoveRouteRequest.of(route));
+            main.postMessage(ImmutableRemoveRouteRequest.of(ImmutableRouteName.of(route)));
         } else {
-            main.fireEvent(ImmutableAddRouteRequest.of(route));
+            main.postMessage(ImmutableAddRouteRequest.of(ImmutableRouteName.of(route)));
         }
     }
 

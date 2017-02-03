@@ -1,5 +1,6 @@
 package com.dacklabs.bustracker.data;
 
+import com.dacklabs.bustracker.application.RouteName;
 import com.google.common.collect.ImmutableList;
 
 import org.immutables.value.Value;
@@ -8,7 +9,7 @@ import org.immutables.value.Value;
 public abstract class BusRoute {
 
     @Value.Parameter
-    public abstract String routeName();
+    public abstract RouteName routeName();
 
     @Value.Parameter
     public abstract ImmutableList<RoutePath> paths();

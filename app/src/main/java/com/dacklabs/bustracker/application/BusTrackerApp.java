@@ -2,38 +2,43 @@ package com.dacklabs.bustracker.application;
 
 import com.dacklabs.bustracker.application.requests.AddRouteRequest;
 import com.dacklabs.bustracker.data.BusRoute;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+
+import java.util.concurrent.ExecutionException;
 
 public class BusTrackerApp {
 
     private final BusApi busApi;
-    private final Clock timer;
+    private final UserRoutes userRoutes;
+    private final ErrorReporter errorReporter;
     private MapState state = MapState.empty();
 
-    public BusTrackerApp(BusApi busApi, Clock timer) {
+    public BusTrackerApp(BusApi busApi, UserRoutes userRoutes, ErrorReporter errorReporter) {
         this.busApi = busApi;
-        this.timer = timer;
+        this.userRoutes = userRoutes;
+        this.errorReporter = errorReporter;
     }
 
     public MapState mapState() {
         return state;
     }
 
-    public void addRoute(AddRouteRequest request) {
-        ListenableFuture<BusApi.ApiResult<BusRoute>> response = busApi.getRoute(request.routeNumber());
+    public void addRoute(AddRouteRequest request) throws ExecutionException, InterruptedException {
+        RouteName route = request.routeNumber();
+        if (userRoutes.add(route)) {
+            busApi.getRoute(request.routeNumber())
+                    .map(this::onRouteDataReturned);
+        }
+    }
 
-        Futures.addCallback(response, new FutureCallback<BusApi.ApiResult<BusRoute>>() {
-            @Override
-            public void onSuccess(BusApi.ApiResult<BusRoute> result) {
-                BusRoute route = result.getResult();
-                state = ImmutableMapState.copyOf(state).withRoutes(route);
-            }
+    private void onRouteDataReturned(QueryResult<BusRoute> result) {
+        if (userRoutes.alreadyHas(result.result.routeName()))
+        if (result.succeeded()) {
+            BusRoute route = result.result;
 
-            @Override
-            public void onFailure(Throwable t) {
-            }
-        });
+            state = ImmutableMapState.copyOf(state).withRoutes(route);
+
+        } else {
+            errorReporter.report(result.failureMessage);
+        }
     }
 }

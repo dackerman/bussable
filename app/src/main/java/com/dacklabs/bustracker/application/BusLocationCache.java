@@ -13,7 +13,7 @@ import java.util.Set;
 
 public final class BusLocationCache {
 
-    private final Map<String, Map<String, BusLocation>> locationCache = new HashMap<>();
+    private final Map<RouteName, Map<String, BusLocation>> locationCache = new HashMap<>();
 
     public Set<Message> storeNewLocations(BusLocationsUpdated message) {
         BusLocations locations = message.busses();

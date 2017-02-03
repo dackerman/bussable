@@ -2,6 +2,8 @@ package com.dacklabs.bustracker.mapbox;
 
 import android.util.Log;
 
+import com.dacklabs.bustracker.application.BusRouteUIElements;
+import com.dacklabs.bustracker.application.RouteName;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusLocation;
 import com.dacklabs.bustracker.data.BusRoute;
@@ -25,6 +27,8 @@ import com.mapbox.services.commons.geojson.LineString;
 import com.mapbox.services.commons.geojson.Point;
 import com.mapbox.services.commons.models.Position;
 
+import org.immutables.value.Value;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +37,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
-public class MapBoxRouteUIElements implements com.dacklabs.bustracker.application.BusRouteUIElements {
+public class MapBoxRouteUIElements implements BusRouteUIElements {
     private final MapboxMap map;
 
     public MapBoxRouteUIElements(MapboxMap map) {
@@ -53,7 +57,7 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
     }
 
     @Override
-    public void removeRoute(String routeName) {
+    public void removeRoute(RouteName routeName) {
         removeLayer(locationId(routeName));
         removeSource(locationId(routeName));
 
@@ -96,25 +100,43 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
         return map.getSourceAs(id);
     }
 
-    private String locationId(String routeName) {
-        return routeName + "_bus-locations";
+    @Value.Immutable(builder = false, intern = true, copy = false)
+    public static abstract class SourceID {
+        @Value.Parameter
+        public abstract String value();
     }
 
-    private String routeId(String routeName) {
-        return routeName + "_bus-route";
+    @Value.Immutable(builder = false, intern = true, copy = false)
+    public static abstract class LayerID {
+        @Value.Parameter
+        public abstract String value();
     }
 
-    private void initRoute(String routeName) {
-        initLineLayer(routeId(routeName),
+    private String locationId(RouteName routeName) {
+        return routeName.displayName() + "_bus-locations";
+    }
+
+    private String routeId(RouteName routeName) {
+        return routeName.displayName() + "_bus-route";
+    }
+
+    private void initRoute(RouteName routeName) {
+        ImmutableLayerID routeLayerId = ImmutableLayerID.of(routeId(routeName));
+        ImmutableSourceID routeSourceId = ImmutableSourceID.of(routeId(routeName));
+        ImmutableLayerID locationsLayerId = ImmutableLayerID.of(locationId(routeName));
+        ImmutableSourceID locationsSourceId = ImmutableSourceID.of(locationId(routeName));
+
+        initLayer(routeLayerId, routeSourceId,
+                () -> new LineLayer(routeLayerId.value(), routeSourceId.value()),
                 lineCap("round"),
                 lineColor("#000"),
                 lineWidth(2f));
 
-        initSymbolLayer(locationId(routeName),
+        initLayer(locationsLayerId, locationsSourceId,
+                () -> new SymbolLayer(locationsLayerId.value(), locationsSourceId.value()),
                 PropertyFactory.iconImage("bus-15"),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.textAllowOverlap(true),
-//                PropertyFactory.iconColor("{busColor}"),
                 PropertyFactory.fillColor("{busColor}"),
                 PropertyFactory.textField("{title}"),
                 PropertyFactory.iconSize(1f),
@@ -123,21 +145,14 @@ public class MapBoxRouteUIElements implements com.dacklabs.bustracker.applicatio
                 PropertyFactory.textAnchor("top"));
     }
 
-    private void initLineLayer(String id, Property<?>... properties) {
-        initRoute(id, () -> new LineLayer(id, id), properties);
-    }
-
-    private void initSymbolLayer(String id, Property<?>... properties) {
-        initRoute(id, () -> new SymbolLayer(id, id), properties);
-    }
-
-    private void initRoute(String id, Supplier<Layer> layerCreator, Property<?>... properties) {
-        if (map.getSource(id) == null) {
-            log("creating source " + id);
-            map.addSource(new GeoJsonSource(id));
+    private void initLayer(LayerID layerId, SourceID sourceId, Supplier<Layer> layerCreator,
+                           Property<?>... properties) {
+        if (map.getSource(sourceId.value()) == null) {
+            log("creating source " + sourceId.value());
+            map.addSource(new GeoJsonSource(sourceId.value()));
         }
-        if (map.getLayer(id) == null) {
-            log("creating layer " + id);
+        if (map.getLayer(layerId.value()) == null) {
+            log("creating layer " + layerId.value());
             Layer layer = layerCreator.get();
             layer.setProperties(properties);
             map.addLayer(layer);

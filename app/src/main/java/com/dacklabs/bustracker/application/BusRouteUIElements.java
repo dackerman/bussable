@@ -8,5 +8,5 @@ public interface BusRouteUIElements {
 
     void updateRoute(BusRoute route);
 
-    void removeRoute(String routeName);
+    void removeRoute(RouteName routeName);
 }

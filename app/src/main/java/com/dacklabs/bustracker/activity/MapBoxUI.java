@@ -4,23 +4,18 @@ import android.Manifest;
 import android.os.Bundle;
 
 import com.dacklabs.bustracker.R;
+import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.mapbox.MapBoxRouteUIElements;
 import com.dacklabs.bustracker.util.Consumer;
 import com.google.common.base.Optional;
-import com.google.common.collect.Sets;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.maps.MapView;
 
-import java.util.HashSet;
-import java.util.Set;
+final class MapBoxUI implements RouteDatabase.Listener {
 
-final class MapBoxUI {
-
-    public static final HashSet<Message> EMPTY_MESSAGES = Sets.newHashSet();
     private final BusRouteMapActivity activity;
     private Optional<MapView> mapView;
     private Optional<MapBoxRouteUIElements> elements;
@@ -46,22 +41,22 @@ final class MapBoxUI {
         this.mapView = Optional.of(mapView);
     }
 
-    public Set<Message> onBusLocationsUpdated(BusLocationsAvailable locationsUpdated) {
+    @Override
+    public void onBusLocationsUpdated(BusLocationsAvailable locationsUpdated) {
         ifPresent(elements, e ->
                 activity.runOnUiThread(() -> e.updateBusses(locationsUpdated)));
-        return Message.NONE;
     }
 
-    public Set<Message> onBusRouteUpdated(BusRouteUpdated routeUpdated) {
+    @Override
+    public void onBusRouteUpdated(BusRouteUpdated routeUpdated) {
         ifPresent(elements, e ->
                 activity.runOnUiThread(() -> e.updateRoute(routeUpdated.route())));
-        return Message.NONE;
     }
 
-    public Set<Message> onBusRouteRemoved(RouteRemoved message) {
+    @Override
+    public void onBusRouteRemoved(RouteRemoved message) {
         ifPresent(elements, e ->
                 activity.runOnUiThread(() -> e.removeRoute(message.routeNumber())));
-        return Sets.newHashSet();
     }
 
     public void onResume() {
