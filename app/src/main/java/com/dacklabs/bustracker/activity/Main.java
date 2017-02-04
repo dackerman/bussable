@@ -1,8 +1,8 @@
 package com.dacklabs.bustracker.activity;
 
 import android.os.Bundle;
-import android.util.Log;
 
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.requests.Message;
@@ -116,7 +116,7 @@ final class Main implements ActivityLifecycle {
     }
 
     private void log(String message) {
-        activity.runOnUiThread(() -> Log.d("DACK:Main App", message));
+        AppLogger.info(this, message);
     }
 
     private static final class ExecutorProcessRunner implements ProcessRunner {

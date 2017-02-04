@@ -1,15 +1,14 @@
 package com.dacklabs.bustracker.http;
 
-import android.util.Log;
-
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.QueryResult;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
-import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.application.requests.ImmutableQueryBusLocations;
 import com.dacklabs.bustracker.application.requests.ImmutableQueryBusRoute;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,6 +47,7 @@ public final class DataSyncProcess {
 
     public synchronized void startSyncingProcess() {
         log("Starting up data syncing process");
+
         isRunning.set(true);
         while (isRunning.get()) {
             List<ListenableFuture<?>> processes = new ArrayList<>();
@@ -128,10 +128,10 @@ public final class DataSyncProcess {
     }
 
     private void logE(String message, Throwable e) {
-        Log.e("DACK:DataSyncProcess", message, e);
+        AppLogger.error(this, e, message);
     }
 
     private void log(String message) {
-        Log.d("DACK:DataSyncProcess", message);
+        AppLogger.info(this, message);
     }
 }

@@ -2,9 +2,10 @@ package com.dacklabs.bustracker.activity;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.location.Location;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.ApplicationMap;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
@@ -37,6 +38,7 @@ public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCa
 
     private RouteList routeList;
     private Bitmap icon;
+    private Marker userPosition;
 
     @Override
     public void setRouteList(RouteList routeList) {
@@ -114,6 +116,15 @@ public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCa
         removePolylinesForRoute(routeRemoved.routeName());
     }
 
+    public void updateUserLocation(Location location) {
+        LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+        if (userPosition != null) {
+            userPosition.setPosition(userLatLng);
+        } else {
+            userPosition = map.addMarker(new MarkerOptions().position(userLatLng));
+        }
+    }
+
     private void removeMarkersForRoute(RouteRemoved routeRemoved) {
         Map<String, Marker> markers = routeMarkers.get(routeRemoved.routeName());
         if (markers == null) return;
@@ -139,7 +150,7 @@ public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCa
         map.moveCamera(CameraUpdateFactory.zoomTo(12));
     }
 
-    private int log(String message) {
-        return Log.d("DACK:MapView", message);
+    private void log(String message) {
+        AppLogger.info(this, message);
     }
 }

@@ -1,7 +1,6 @@
 package com.dacklabs.bustracker.mapbox;
 
-import android.util.Log;
-
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.BusRouteUIElements;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusLocation;
@@ -174,7 +173,7 @@ public class MapBoxRouteUIElements implements BusRouteUIElements {
     }
 
     private void log(String message) {
-        Log.d("DACK:MapElements", message);
+        AppLogger.info(this, message);
     }
 
     private void removeSource(String id) {

@@ -73,6 +73,6 @@ public final class RouteList {
     }
 
     private void log(String message) {
-        Log.d("DACK:RouteList", message);
+        AppLogger.info(this, message);
     }
 }

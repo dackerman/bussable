@@ -1,7 +1,6 @@
 package com.dacklabs.bustracker.activity;
 
-import android.util.Log;
-
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.ApplicationMap;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
@@ -77,7 +76,7 @@ final class BusTrackerApp {
     }
 
     private void log(String message) {
-        Log.d("DACK:Main App", message);
+        AppLogger.info(this, message);
     }
 
     private static final class ExecutorProcessRunner implements ProcessRunner {

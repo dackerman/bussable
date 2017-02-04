@@ -1,6 +1,6 @@
 package com.dacklabs.bustracker.http;
 
-import android.util.Log;
+import com.dacklabs.bustracker.application.AppLogger;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -48,13 +48,17 @@ public class HttpService {
         log("GET " + urlString);
         Response response = call.execute();
         String xmlString = response.body().string();
-        log(String.format(Locale.US, "(took %dms) Response: %s",
-                response.receivedResponseAtMillis() - response.sentRequestAtMillis(),
-                xmlString));
+        log(String.format(Locale.US, "Response received: took %dms for response of %s",
+                response.receivedResponseAtMillis() - response.sentRequestAtMillis(), urlString));
+        logv(String.format(Locale.US, "Response: %s", xmlString));
         return xmlString;
     }
 
+    private void logv(String message) {
+        AppLogger.verbose(this, message);
+    }
+
     private void log(String message) {
-        Log.d("DACK:HttpService", message);
+        AppLogger.info(this, message);
     }
 }

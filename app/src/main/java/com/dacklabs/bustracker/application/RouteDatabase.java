@@ -1,7 +1,5 @@
 package com.dacklabs.bustracker.application;
 
-import android.util.Log;
-
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.ImmutableBusLocationsAvailable;
@@ -74,7 +72,7 @@ public final class RouteDatabase {
 
     }
 
-    private int log(String message) {
-        return Log.d("DACK:RouteDatabase", message);
+    private void log(String message) {
+        AppLogger.info(this, message);
     }
 }
