@@ -1,19 +1,17 @@
 package com.dacklabs.bustracker.activity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 import com.dacklabs.bustracker.R;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
-public class BusRouteGoogleMapActivity extends FragmentActivity implements OnMapReadyCallback {
+public class BusRouteGoogleMapActivity extends FragmentActivity {
 
-    private GoogleMap mMap;
+    private static final BusTrackerApp app = new BusTrackerApp();
+    private BusRouteGoogleMapView map = new BusRouteGoogleMapView();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,25 +20,39 @@ public class BusRouteGoogleMapActivity extends FragmentActivity implements OnMap
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mapFragment.getMapAsync(map);
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.tinybus);
+        map.setIcon(bitmap);
+
+        app.initialize(map, new AndroidStorage(this), new RunOnMainThreadListener.Factory(this));
     }
 
-
-    /**
-     * Manipulates the map once available. This callback is triggered when the map is ready to be
-     * used. This is where we can add markers or lines, add listeners or move the camera. In this
-     * case, we just add a marker near Sydney, Australia. If Google Play services is not installed
-     * on the device, the user will be prompted to install it inside the SupportMapFragment. This
-     * method will only be triggered once the user has installed Google Play services and returned
-     * to the app.
-     */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+    public void onStart() {
+        super.onStart();
+        app.show();
+    }
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    public void onPause() {
+        super.onPause();
+        app.save();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        app.hide();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        app.save();
+    }
+
+    public void onDestroy() {
+        super.onDestroy();
+        app.shutdown();
     }
 }

@@ -1,10 +1,11 @@
 package com.dacklabs.bustracker.activity;
 
-import android.os.Bundle;
 import android.util.Log;
 
+import com.dacklabs.bustracker.application.ApplicationMap;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
+import com.dacklabs.bustracker.application.Storage;
 import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.http.DataSyncProcess;
 import com.dacklabs.bustracker.http.HttpService;
@@ -20,103 +21,63 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
-final class Main implements ActivityLifecycle {
+final class BusTrackerApp {
 
     private ScheduledExecutorService executor;
-    private BusRouteMapActivity activity;
     private HttpService http;
-    private MapBoxUI ui;
     private NextBusApi nextBusApi;
     private RouteList routeList;
-    private AsyncEventBus eventBus;
+    private AsyncEventBus appEvents;
     private RouteDatabase db;
     private DataSyncProcess dataSyncProcess;
-    private AndroidStorage storage;
-
-    public void setActivity(BusRouteMapActivity busRouteMap) {
-        this.activity = busRouteMap;
-    }
+    private Storage storage;
 
     public void postMessage(Message message) {
-        eventBus.post(message);
+        appEvents.post(message);
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        log("onCreate");
+    public void initialize(ApplicationMap map, Storage storage, RunOnMainThreadListener.Factory
+            mainThreadListenerFactory) {
+        log("initializing");
         executor = Executors.newScheduledThreadPool(10);
-        eventBus = new AsyncEventBus("events", executor);
+        appEvents = new AsyncEventBus("events", executor);
 
         http = new HttpService(new OkHttpClient());
         nextBusApi = new NextBusApi(http);
 
-        storage = new AndroidStorage(activity);
+        this.storage = storage;
 
-        routeList = new RouteList(eventBus);
+        routeList = new RouteList(appEvents);
         routeList.load(storage);
-        eventBus.register(routeList);
+        appEvents.register(routeList);
+        map.setRouteList(routeList);
 
         db = new RouteDatabase();
 
         dataSyncProcess = new DataSyncProcess(routeList, db, nextBusApi, new ExecutorProcessRunner(executor));
 
-        ui = new MapBoxUI(activity);
-        ui.onCreate(savedInstanceState);
-        db.listen(ui);
+        db.listen(mainThreadListenerFactory.wrap(map));
     }
 
-    @Override
-    public void onStart() {
-        log("onStart");
+    public void show() {
         executor.execute(dataSyncProcess::startSyncingProcess);
     }
 
-    @Override
-    public void onResume() {
-        log("onResume");
-        ui.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        log("onPause");
-        ui.onPause();
+    public void save() {
         routeList.save(storage);
-        dataSyncProcess.stopSyncing();
     }
 
-    @Override
-    public void onStop() {
-        log("onStop");
+    public void hide() {
+        dataSyncProcess.stopSyncing();
         http.cancelInFlightRequests();
     }
 
-    @Override
-    public void onRestart() {
-        log("onRestart");
-    }
-
-    @Override
-    public void onDestroy() {
-        log("onDestroy");
-        ui.onDestroy();
+    public void shutdown() {
         executor.shutdown();
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        log("onSaveInstanceState");
-        ui.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onLowMemory() {
-        log("onLowMemory");
-        ui.onLowMemory();
-    }
-
     private void log(String message) {
-        activity.runOnUiThread(() -> Log.d("DACK:Main App", message));
+        Log.d("DACK:Main App", message);
     }
 
     private static final class ExecutorProcessRunner implements ProcessRunner {

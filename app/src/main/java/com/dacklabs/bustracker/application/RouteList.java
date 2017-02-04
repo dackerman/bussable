@@ -64,6 +64,10 @@ public final class RouteList {
         log("After loading from storage, routes are now " + serialize());
     }
 
+    public boolean routeIsSelected(RouteName routeName) {
+        return routes.contains(routeName);
+    }
+
     public Iterable<RouteName> routes() {
         return routes;
     }

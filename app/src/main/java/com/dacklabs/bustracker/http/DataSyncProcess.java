@@ -41,10 +41,6 @@ public final class DataSyncProcess {
         this.runner = runner;
     }
 
-    public interface ProcessRunner {
-        ListenableFuture<?> execute(Runnable process);
-    }
-
     public void stopSyncing() {
         log("Got a shutdown request, shutting down");
         isRunning.set(false);

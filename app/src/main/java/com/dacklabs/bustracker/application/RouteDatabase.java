@@ -8,22 +8,24 @@ import com.dacklabs.bustracker.application.requests.ImmutableBusLocationsAvailab
 import com.dacklabs.bustracker.application.requests.ImmutableBusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.data.BusLocation;
+import com.dacklabs.bustracker.data.BusLocationUpdate;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.data.ImmutableBusLocationUpdate;
 import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.collect.Sets;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public final class RouteDatabase {
 
     public interface Listener {
         void onBusLocationsUpdated(BusLocationsAvailable locationsUpdated);
-
         void onBusRouteUpdated(BusRouteUpdated routeUpdated);
-
         void onBusRouteRemoved(RouteRemoved message);
     }
 
@@ -32,6 +34,8 @@ public final class RouteDatabase {
     private final ConcurrentHashMap<RouteName, BusRoute> routes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<RouteName, Map<String, BusLocation>> locations = new
             ConcurrentHashMap<>();
+
+    private final BlockingDeque<BusLocationUpdate> updateQueue = new LinkedBlockingDeque<>();
 
     public void listen(Listener listener) {
         listeners.add(listener);
@@ -56,7 +60,11 @@ public final class RouteDatabase {
         if (existingLocations == null) existingLocations = new ConcurrentHashMap<>();
 
         for (Map.Entry<String, BusLocation> entry : newLocations.locations().entrySet()) {
-            existingLocations.put(entry.getKey(), entry.getValue());
+            BusLocation newLocation = entry.getValue();
+            BusLocation previousLocation = existingLocations.put(entry.getKey(), newLocation);
+            if (!newLocation.equals(previousLocation)) {
+                updateQueue.add(ImmutableBusLocationUpdate.of(newLocations.routeName(), newLocation));
+            }
         }
 
         for (Listener listener : listeners) {
