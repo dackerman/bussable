@@ -1,6 +1,7 @@
 package com.dacklabs.bustracker.activity;
 
 import android.Manifest;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -119,8 +120,14 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
                     break;
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     log("Settings need to be updated for better GPS precision");
+                    try {
+                        status.startResolutionForResult(this, 2);
+                    } catch (IntentSender.SendIntentException e) {
+                        logE("Failed to send intent", e);
+                    }
                     break;
                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                    log("Can't change settings for GPS... Ignoring");
                     break;
             }
         });
@@ -183,5 +190,9 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
 
     private void log(String message) {
         AppLogger.info(this, message);
+    }
+
+    private void logE(String message, Throwable e) {
+        AppLogger.error(this, e, message);
     }
 }
