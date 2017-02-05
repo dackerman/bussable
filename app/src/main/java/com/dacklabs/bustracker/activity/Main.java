@@ -3,6 +3,7 @@ package com.dacklabs.bustracker.activity;
 import android.os.Bundle;
 
 import com.dacklabs.bustracker.application.AppLogger;
+import com.dacklabs.bustracker.application.BusApi;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.requests.Message;
@@ -26,7 +27,7 @@ final class Main implements ActivityLifecycle {
     private BusRouteMapActivity activity;
     private HttpService http;
     private MapBoxUI ui;
-    private NextBusApi nextBusApi;
+    private BusApi busApi;
     private RouteList routeList;
     private AsyncEventBus eventBus;
     private RouteDatabase db;
@@ -48,7 +49,7 @@ final class Main implements ActivityLifecycle {
         eventBus = new AsyncEventBus("events", executor);
 
         http = new HttpService(new OkHttpClient());
-        nextBusApi = new NextBusApi(http);
+        busApi = new NextBusApi(http);
 
         storage = new AndroidStorage(activity);
 
@@ -58,11 +59,11 @@ final class Main implements ActivityLifecycle {
 
         db = new RouteDatabase();
 
-        dataSyncProcess = new DataSyncProcess(routeList, db, nextBusApi, new ExecutorProcessRunner(executor));
+        dataSyncProcess = new DataSyncProcess(routeList, db, busApi, new ExecutorProcessRunner(executor));
 
         ui = new MapBoxUI(activity);
         ui.onCreate(savedInstanceState);
-        db.listen(ui);
+        db.registerListener(ui);
     }
 
     @Override

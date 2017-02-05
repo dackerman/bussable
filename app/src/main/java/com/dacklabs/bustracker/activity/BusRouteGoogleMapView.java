@@ -6,12 +6,13 @@ import android.location.Location;
 import android.support.annotation.NonNull;
 
 import com.dacklabs.bustracker.application.AppLogger;
-import com.dacklabs.bustracker.application.ApplicationMap;
+import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
 import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
 import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.data.BusLocation;
+import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.PathCoordinate;
 import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.data.RoutePath;
@@ -24,88 +25,49 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.common.base.Optional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCallback {
+public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMapReadyCallback {
 
     private GoogleMap map;
     private final Map<RouteName, Map<String, Marker>> routeMarkers = new HashMap<>();
     private final Map<RouteName, List<Polyline>> routes = new HashMap<>();
-
-    private RouteList routeList;
-    private Bitmap icon;
     private Marker userPosition;
 
-    @Override
-    public void setRouteList(RouteList routeList) {
-        this.routeList = routeList;
-    }
+    private final RouteList routeList;
+    private final RouteDatabase db;
+    private final Bitmap icon;
 
-    public void setIcon(Bitmap icon) {
+    public BusRouteGoogleMapView(RouteList routeList, RouteDatabase db, Bitmap icon) {
+        this.routeList = routeList;
+        this.db = db;
         this.icon = icon;
     }
 
-    private String makeTitle(RouteName routeName, BusLocation location) {
-        String route = routeName.displayName();
-        String number = location.vehicleId();
-        String direction = location.direction().name();
-        return String.format("%s-%s (%s)", route, number, direction);
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        log("onMapReady");
+        map = googleMap;
+        LatLng sf = new LatLng(37.753205555699026, -122.4262607254285);
+        map.moveCamera(CameraUpdateFactory.newLatLng(sf));
+        map.moveCamera(CameraUpdateFactory.zoomTo(12));
+
+        initializeMapWithCachedData();
     }
 
     @Override
     public void onBusLocationsUpdated(BusLocationsAvailable locationsUpdated) {
-        if (map == null) return;
-        if (!routeList.routeIsSelected(locationsUpdated.routeName())) return;
-
-        Map<String, Marker> markers = getOrCreateMarkersForRoute(locationsUpdated.routeName());
-
-        Map<String, BusLocation> locations = locationsUpdated.locations();
-        for (String busId : locations.keySet()) {
-            BusLocation location = locations.get(busId);
-            Marker existingMarker = markers.get(busId);
-            if (existingMarker == null) {
-                existingMarker = map.addMarker(new MarkerOptions()
-                        .position(new LatLng(location.latitude(), location.longitude()))
-                        .icon(BitmapDescriptorFactory.fromBitmap(icon))
-                        .title(makeTitle(locationsUpdated.routeName(), location)));
-                markers.put(busId, existingMarker);
-            } else {
-                existingMarker.setPosition(new LatLng(location.latitude(), location.longitude()));
-            }
-        }
-    }
-
-    @NonNull
-    private Map<String, Marker> getOrCreateMarkersForRoute(RouteName routeName) {
-        Map<String, Marker> markers = routeMarkers.get(routeName);
-        if (markers == null) {
-            markers = new HashMap<>();
-            routeMarkers.put(routeName, markers);
-        }
-        return markers;
+        updateBusLocations(locationsUpdated.routeName(), locationsUpdated.locations());
     }
 
     @Override
     public void onBusRouteUpdated(BusRouteUpdated routeUpdated) {
-        RouteName routeName = routeUpdated.route().routeName();
-        if (map == null) return;
-        if (!routeList.routeIsSelected(routeName)) return;
-        removePolylinesForRoute(routeName);
-
-        List<Polyline> polylines = new ArrayList<>();
-        for (RoutePath routePath : routeUpdated.route().paths()) {
-            PolylineOptions options = new PolylineOptions()
-                    .color(Color.GREEN);
-            for (PathCoordinate coord : routePath.coordinates()) {
-                options.add(new LatLng(coord.lat(), coord.lon()));
-            }
-            polylines.add(map.addPolyline(options));
-        }
-        routes.put(routeName, polylines);
+        updateRoute(routeUpdated.route());
     }
 
     @Override
@@ -125,6 +87,76 @@ public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCa
         }
     }
 
+    private void initializeMapWithCachedData() {
+        log("initializing map with cached data");
+        for (RouteName routeName : routeList.routes()) {
+            Optional<BusRoute> maybeRoute = db.getRoute(routeName);
+            if (maybeRoute.isPresent()) {
+                updateRoute(maybeRoute.get());
+            }
+            Map<String, BusLocation> locations = db.queryLocations(routeName);
+            if (!locations.isEmpty()) {
+                updateBusLocations(routeName, locations);
+            }
+        }
+    }
+
+    private String makeTitle(RouteName routeName, BusLocation location) {
+        String route = routeName.displayName();
+        String number = location.vehicleId();
+        String direction = location.direction().name();
+        return String.format("%s-%s (%s)", route, number, direction);
+    }
+
+    private void updateBusLocations(RouteName routeName, Map<String, BusLocation> locations) {
+        if (map == null) return;
+        if (!routeList.routeIsSelected(routeName)) return;
+
+        Map<String, Marker> markers = getOrCreateMarkersForRoute(routeName);
+
+        for (String busId : locations.keySet()) {
+            BusLocation location = locations.get(busId);
+            Marker existingMarker = markers.get(busId);
+            if (existingMarker == null) {
+                existingMarker = map.addMarker(new MarkerOptions()
+                        .position(new LatLng(location.latitude(), location.longitude()))
+                        .icon(BitmapDescriptorFactory.fromBitmap(icon))
+                        .title(makeTitle(routeName, location)));
+                markers.put(busId, existingMarker);
+            } else {
+                existingMarker.setPosition(new LatLng(location.latitude(), location.longitude()));
+            }
+        }
+    }
+
+    private void updateRoute(BusRoute route) {
+        RouteName routeName = route.routeName();
+        if (map == null) return;
+        if (!routeList.routeIsSelected(routeName)) return;
+        removePolylinesForRoute(routeName);
+
+        List<Polyline> polylines = new ArrayList<>();
+        for (RoutePath routePath : route.paths()) {
+            PolylineOptions options = new PolylineOptions()
+                    .color(Color.GREEN);
+            for (PathCoordinate coord : routePath.coordinates()) {
+                options.add(new LatLng(coord.lat(), coord.lon()));
+            }
+            polylines.add(map.addPolyline(options));
+        }
+        routes.put(routeName, polylines);
+    }
+
+    @NonNull
+    private Map<String, Marker> getOrCreateMarkersForRoute(RouteName routeName) {
+        Map<String, Marker> markers = routeMarkers.get(routeName);
+        if (markers == null) {
+            markers = new HashMap<>();
+            routeMarkers.put(routeName, markers);
+        }
+        return markers;
+    }
+
     private void removeMarkersForRoute(RouteRemoved routeRemoved) {
         Map<String, Marker> markers = routeMarkers.get(routeRemoved.routeName());
         if (markers == null) return;
@@ -139,15 +171,6 @@ public final class BusRouteGoogleMapView implements ApplicationMap, OnMapReadyCa
         for (Polyline polyline : polylines) {
             polyline.remove();
         }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        log("onMapReady");
-        map = googleMap;
-        LatLng sf = new LatLng(37.753205555699026, -122.4262607254285);
-        map.moveCamera(CameraUpdateFactory.newLatLng(sf));
-        map.moveCamera(CameraUpdateFactory.zoomTo(12));
     }
 
     private void log(String message) {

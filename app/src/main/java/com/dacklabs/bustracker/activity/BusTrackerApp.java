@@ -1,12 +1,11 @@
 package com.dacklabs.bustracker.activity;
 
 import com.dacklabs.bustracker.application.AppLogger;
-import com.dacklabs.bustracker.application.ApplicationMap;
+import com.dacklabs.bustracker.application.BusApi;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.Storage;
 import com.dacklabs.bustracker.application.requests.Message;
-import com.dacklabs.bustracker.http.DataSyncProcess;
 import com.dacklabs.bustracker.http.HttpService;
 import com.dacklabs.bustracker.http.NextBusApi;
 import com.dacklabs.bustracker.http.ProcessRunner;
@@ -22,64 +21,75 @@ import okhttp3.OkHttpClient;
 
 final class BusTrackerApp {
 
+    public static final BusTrackerApp app = new BusTrackerApp();
+    public static final int IDLE_THREAD_POOL_SIZE = 5;
+
+    static {
+        app.initialize();
+    }
+
     private ScheduledExecutorService executor;
     private HttpService http;
-    private NextBusApi nextBusApi;
+    private BusApi busApi;
     private RouteList routeList;
     private AsyncEventBus appEvents;
     private RouteDatabase db;
-    private DataSyncProcess dataSyncProcess;
-    private Storage storage;
+
+    public void initialize() {
+        log("initializing");
+        executor = Executors.newScheduledThreadPool(IDLE_THREAD_POOL_SIZE);
+        appEvents = new AsyncEventBus("events", executor);
+
+        http = new HttpService(new OkHttpClient());
+        busApi = new NextBusApi(http);
+
+        routeList = new RouteList(appEvents);
+        appEvents.register(routeList);
+
+        db = new RouteDatabase();
+    }
 
     public void postMessage(Message message) {
         appEvents.post(message);
     }
 
-    public void initialize(ApplicationMap map, Storage storage, RunOnMainThreadListener.Factory
-            mainThreadListenerFactory) {
-        log("initializing");
-        executor = Executors.newScheduledThreadPool(10);
-        appEvents = new AsyncEventBus("events", executor);
+    public RouteDatabase db() {
+        return db;
+    }
 
-        http = new HttpService(new OkHttpClient());
-        nextBusApi = new NextBusApi(http);
+    public RouteList routeList() {
+        return routeList;
+    }
 
-        this.storage = storage;
-
-        routeList = new RouteList(appEvents);
+    public void load(Storage storage) {
         routeList.load(storage);
-        appEvents.register(routeList);
-        map.setRouteList(routeList);
-
-        db = new RouteDatabase();
-
-        dataSyncProcess = new DataSyncProcess(routeList, db, nextBusApi, new ExecutorProcessRunner(executor));
-
-        db.listen(mainThreadListenerFactory.wrap(map));
     }
 
-    public void show() {
-        executor.execute(dataSyncProcess::startSyncingProcess);
+    public void execute(Runnable command) {
+        executor.execute(command);
     }
 
-    public void save() {
+    public void save(Storage storage) {
         routeList.save(storage);
-    }
-
-    public void hide() {
-        dataSyncProcess.stopSyncing();
-        http.cancelInFlightRequests();
     }
 
     public void shutdown() {
         executor.shutdown();
     }
 
+    public BusApi nextBusApi() {
+        return busApi;
+    }
+
     private void log(String message) {
         AppLogger.info(this, message);
     }
 
-    private static final class ExecutorProcessRunner implements ProcessRunner {
+    public ExecutorProcessRunner processRunner() {
+        return new ExecutorProcessRunner(executor);
+    }
+
+    public static final class ExecutorProcessRunner implements ProcessRunner {
 
         private final ScheduledExecutorService executor;
 

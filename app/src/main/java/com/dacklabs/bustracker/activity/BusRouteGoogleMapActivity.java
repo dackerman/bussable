@@ -1,6 +1,7 @@
 package com.dacklabs.bustracker.activity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,9 +14,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 
+import com.dacklabs.bustracker.BuildConfig;
 import com.dacklabs.bustracker.R;
 import com.dacklabs.bustracker.application.AppLogger;
+import com.dacklabs.bustracker.http.DataSyncProcess;
 import com.github.tony19.timber.loggly.LogglyTree;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,27 +33,35 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.RuntimeRemoteException;
+import com.google.common.base.Preconditions;
 import com.joshdholtz.sentry.Sentry;
 
 import java.util.ArrayList;
 
 import timber.log.Timber;
 
+import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
+
 public class BusRouteGoogleMapActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
-    private static final BusTrackerApp app = new BusTrackerApp();
-    private BusRouteGoogleMapView map = new BusRouteGoogleMapView();
+    private BusRouteGoogleMapView map;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
+    private DataSyncProcess dataSyncProcess;
+    private RunOnMainThreadListener mapDbListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Timber.plant(new LogglyTree(getString(R.string.loggly_api_key)));
-        Sentry.init(this, getString(R.string.sentry_api_key));
+        if (BuildConfig.ENABLE_SENTRY) {
+            Sentry.init(this, getString(R.string.sentry_api_key));
+        }
+        Bitmap routeIcon = Preconditions.checkNotNull(
+                BitmapFactory.decodeResource(getResources(), R.drawable.tinybus), "Couldn't load bitmap resource");
+        map = new BusRouteGoogleMapView(app.routeList(), app.db(), routeIcon);
 
         setContentView(R.layout.activity_bus_route_google_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -70,10 +83,32 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.google_map_toolbar);
         setSupportActionBar(toolbar);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.tinybus);
-        map.setIcon(bitmap);
+        setupApp();
+    }
 
-        app.initialize(map, new AndroidStorage(this), new RunOnMainThreadListener.Factory(this));
+    private void setupApp() {
+        dataSyncProcess = new DataSyncProcess(
+                app.routeList(),
+                app.db(),
+                app.nextBusApi(),
+                app.processRunner());
+
+        mapDbListener = new RunOnMainThreadListener(this, map);
+        app.db().registerListener(mapDbListener);
+        app.load(new AndroidStorage(this));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.bus_route_map_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent = new Intent(this, RouteSelectionActivity.class);
+        startActivity(intent);
+        return true;
     }
 
     public boolean requirePerms(String... permsNeeded) {
@@ -153,34 +188,42 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
 
     @Override
     public void onStart() {
-        super.onStart();
-        app.show();
         log("onStart: connecting google api");
+        super.onStart();
         googleApiClient.connect();
     }
 
+    @Override
+    protected void onResume() {
+        log("onResume");
+        super.onResume();
+        app.execute(dataSyncProcess::startSyncingProcess);
+    }
+
     public void onPause() {
+        log("onPause");
         super.onPause();
-        app.save();
+        app.save(new AndroidStorage(this));
+        dataSyncProcess.stopSyncing();
     }
 
     @Override
     public void onStop() {
-        super.onStop();
-        app.hide();
-        googleApiClient.disconnect();
         log("onStop: disconnecting google api");
+        super.onStop();
+        googleApiClient.disconnect();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        app.db().unregisterListener(mapDbListener);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        app.save();
-    }
-
-    public void onDestroy() {
-        super.onDestroy();
-        app.shutdown();
+        app.save(new AndroidStorage(this));
     }
 
     @Override

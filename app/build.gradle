@@ -12,8 +12,12 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField 'boolean', 'ENABLE_SENTRY', 'true'
     }
     buildTypes {
+        debug {
+            buildConfigField 'boolean', 'ENABLE_SENTRY', 'false'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

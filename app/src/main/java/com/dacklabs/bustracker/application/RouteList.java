@@ -1,7 +1,5 @@
 package com.dacklabs.bustracker.application;
 
-import android.util.Log;
-
 import com.dacklabs.bustracker.application.requests.AddRouteRequest;
 import com.dacklabs.bustracker.application.requests.ImmutableRouteAdded;
 import com.dacklabs.bustracker.application.requests.ImmutableRouteRemoved;
@@ -19,6 +17,7 @@ import java.util.Set;
 
 public final class RouteList {
 
+    private boolean loaded = false;
     private final Set<RouteName> routes = Sets.newConcurrentHashSet();
     private final EventBus eventBus;
 
@@ -54,6 +53,7 @@ public final class RouteList {
     }
 
     public void load(Storage storage) {
+        if (loaded) return;
         log("Loading RouteList from storage");
         Optional<String> data = storage.read("routelist");
         if (data.isPresent()) {
@@ -62,6 +62,7 @@ public final class RouteList {
             }
         }
         log("After loading from storage, routes are now " + serialize());
+        loaded = true;
     }
 
     public boolean routeIsSelected(RouteName routeName) {

@@ -2,6 +2,7 @@ package com.dacklabs.bustracker.application;
 
 import android.util.Log;
 
+import com.dacklabs.bustracker.BuildConfig;
 import com.joshdholtz.sentry.Sentry;
 
 import timber.log.Timber;
@@ -32,7 +33,9 @@ public final class AppLogger {
         Timber.tag("BusTracker");
         Timber.tag(caller.getClass().getCanonicalName());
         Timber.e(error, message, args);
-        Sentry.captureException(error, message);
+        if (BuildConfig.ENABLE_SENTRY) {
+            Sentry.captureException(error, message);
+        }
         Log.e("DACK:" + caller.getClass().getCanonicalName(), String.format(message, args), error);
     }
 }

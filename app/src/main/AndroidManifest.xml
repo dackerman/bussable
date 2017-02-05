@@ -40,6 +40,16 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activity.RouteSelectionActivity"
+            android:label="@string/title_activity_route_selection"
+            android:parentActivityName=".activity.BusRouteGoogleMapActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dacklabs.bustracker.activity.BusRouteGoogleMapActivity"/>
+        </activity>
     </application>
 
 </manifest>

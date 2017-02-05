@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class NextBusApi {
+public class NextBusApi implements com.dacklabs.bustracker.application.BusApi {
 
     private final HttpService http;
 
@@ -34,6 +34,7 @@ public class NextBusApi {
         this.http = http;
     }
 
+    @Override
     public QueryResult<BusLocations> queryBusLocationsFor(QueryBusLocations query) {
         try {
             ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
@@ -52,6 +53,7 @@ public class NextBusApi {
         }
     }
 
+    @Override
     public QueryResult<BusRoute> queryBusRouteFor(QueryBusRoute query) {
         try {
             String response = nextBusCall("routeConfig", ImmutableMap.of(

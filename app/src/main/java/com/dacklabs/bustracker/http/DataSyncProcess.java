@@ -1,6 +1,7 @@
 package com.dacklabs.bustracker.http;
 
 import com.dacklabs.bustracker.application.AppLogger;
+import com.dacklabs.bustracker.application.BusApi;
 import com.dacklabs.bustracker.application.QueryResult;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
@@ -27,12 +28,12 @@ public final class DataSyncProcess {
 
     private final RouteList routeList;
     private final RouteDatabase db;
-    private final NextBusApi api;
+    private final BusApi api;
     private final ProcessRunner runner;
-    private final AtomicBoolean isRunning = new AtomicBoolean(true);
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final ConcurrentHashMap<RouteName, String> lastQueryTimes = new ConcurrentHashMap<>();
 
-    public DataSyncProcess(RouteList routeList, RouteDatabase db, NextBusApi api, ProcessRunner
+    public DataSyncProcess(RouteList routeList, RouteDatabase db, BusApi api, ProcessRunner
             runner) {
         this.routeList = routeList;
         this.db = db;
@@ -46,6 +47,10 @@ public final class DataSyncProcess {
     }
 
     public synchronized void startSyncingProcess() {
+        if (isRunning.get()) {
+            log("Process already running, skipping");
+            return;
+        }
         log("Starting up data syncing process");
 
         isRunning.set(true);
