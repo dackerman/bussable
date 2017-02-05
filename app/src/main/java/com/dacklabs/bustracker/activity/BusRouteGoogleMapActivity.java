@@ -42,14 +42,14 @@ import timber.log.Timber;
 
 import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
 
-public class BusRouteGoogleMapActivity extends AppCompatActivity
-        implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
+public class BusRouteGoogleMapActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
     private BusRouteGoogleMapView map;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
     private DataSyncProcess dataSyncProcess;
     private RunOnMainThreadListener mapDbListener;
+    private boolean trackingLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,21 +59,15 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
         if (BuildConfig.ENABLE_SENTRY) {
             Sentry.init(this, getString(R.string.sentry_api_key));
         }
-        Bitmap routeIcon = Preconditions.checkNotNull(
-                BitmapFactory.decodeResource(getResources(), R.drawable.tinybus), "Couldn't load bitmap resource");
+        Bitmap routeIcon = Preconditions.checkNotNull(BitmapFactory.decodeResource(getResources(), R.drawable.tinybus), "Couldn't load bitmap resource");
         map = new BusRouteGoogleMapView(app.routeList(), app.db(), routeIcon);
 
         setContentView(R.layout.activity_bus_route_google_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(map);
 
-        googleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        googleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
 
         locationRequest = new LocationRequest();
         locationRequest.setInterval(5000);
@@ -87,11 +81,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
     }
 
     private void setupApp() {
-        dataSyncProcess = new DataSyncProcess(
-                app.routeList(),
-                app.db(),
-                app.nextBusApi(),
-                app.processRunner());
+        dataSyncProcess = new DataSyncProcess(app.routeList(), app.db(), app.nextBusApi(), app.processRunner());
 
         mapDbListener = new RunOnMainThreadListener(this, map);
         app.db().registerListener(mapDbListener);
@@ -106,8 +96,21 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent = new Intent(this, RouteSelectionActivity.class);
-        startActivity(intent);
+        switch (item.getItemId()) {
+            case R.id.action_edit_routes:
+                Intent intent = new Intent(this, RouteSelectionActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.action_toggle_geo:
+                trackingLocation = !trackingLocation;
+                if (trackingLocation) {
+                    startLocationTracking();
+                } else {
+                    stopLocationTracking();
+                    map.removeUserLocation();
+                }
+                break;
+        }
         return true;
     }
 
@@ -128,23 +131,25 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+    }
+
+    private void stopLocationTracking() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+    }
+
+    private void startLocationTracking() {
         if (locationPermissionsWereGranted()) {
             log("User has granted location permissions");
 
             whenSettingsAreAppropriateForTracking(() -> {
                 log("Requesting location");
-                LocationServices.FusedLocationApi.requestLocationUpdates(
-                        googleApiClient, locationRequest, this);
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
             });
         }
     }
 
     private void whenSettingsAreAppropriateForTracking(Runnable callback) {
-        PendingResult<LocationSettingsResult> settingsResult =
-                LocationServices.SettingsApi.checkLocationSettings(googleApiClient,
-                        new LocationSettingsRequest
-                                .Builder()
-                                .addLocationRequest(locationRequest).build());
+        PendingResult<LocationSettingsResult> settingsResult = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, new LocationSettingsRequest.Builder().addLocationRequest(locationRequest).build());
 
         settingsResult.setResultCallback(result -> {
             Status status = result.getStatus();
@@ -169,10 +174,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
     }
 
     private boolean locationPermissionsWereGranted() {
-        return requirePerms(Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.INTERNET);
+        return requirePerms(Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.INTERNET);
     }
 
     @Override
@@ -211,6 +213,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity
     public void onStop() {
         log("onStop: disconnecting google api");
         super.onStop();
+        stopLocationTracking();
         googleApiClient.disconnect();
     }
 

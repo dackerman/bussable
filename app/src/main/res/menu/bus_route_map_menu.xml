@@ -3,8 +3,13 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_add_route"
+        android:id="@+id/action_edit_routes"
         android:icon="@drawable/ic_menu_manage"
         android:title="Routes"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_toggle_geo"
+        android:icon="@drawable/ic_menu_send"
+        android:title="Toggle Location"
         app:showAsAction="ifRoom" />
 </menu>

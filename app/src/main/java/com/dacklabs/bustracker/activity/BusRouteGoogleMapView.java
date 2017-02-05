@@ -87,6 +87,11 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
         }
     }
 
+    public void removeUserLocation() {
+        userPosition.remove();
+        userPosition = null;
+    }
+
     private void initializeMapWithCachedData() {
         log("initializing map with cached data");
         for (RouteName routeName : routeList.routes()) {
