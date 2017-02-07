@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.http;
+package com.dacklabs.bustracker.application;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

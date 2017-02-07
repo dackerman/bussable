@@ -10,7 +10,7 @@ import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.http.DataSyncProcess;
 import com.dacklabs.bustracker.http.HttpService;
 import com.dacklabs.bustracker.http.NextBusApi;
-import com.dacklabs.bustracker.http.ProcessRunner;
+import com.dacklabs.bustracker.application.ProcessRunner;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;

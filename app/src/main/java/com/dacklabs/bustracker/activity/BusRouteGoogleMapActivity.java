@@ -123,7 +123,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements Goog
         }
 
         if (!permsMissing.isEmpty()) {
-            ActivityCompat.requestPermissions(this, permsMissing.toArray(new String[]{}), 1);
+            ActivityCompat.requestPermissions(this, permsMissing.toArray(new String[]{}), PERMISSIONS_REQUEST);
             return false;
         }
         return true;
@@ -134,6 +134,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements Goog
     }
 
     private void stopLocationTracking() {
+        if (googleApiClient == null) return;
         LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
     }
 
@@ -145,6 +146,33 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements Goog
                 log("Requesting location");
                 LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
             });
+        }
+    }
+
+    private static final int LOCATION_STATUS_REQUEST = 2;
+    private static final int PERMISSIONS_REQUEST = 1;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case LOCATION_STATUS_REQUEST:
+                log("Got result for location status request");
+                if (resultCode == RESULT_OK) {
+                    log("Location status is updated, retrying");
+                    startLocationTracking();
+                } else {
+                    log("Result code wasn't OK (" + resultCode + "), not doing anything");
+                }
+                break;
+            case PERMISSIONS_REQUEST:
+                log("Got result for location permissions");
+                if (resultCode == RESULT_OK) {
+                    log("Location permissions granted, retrying");
+                    startLocationTracking();
+                } else {
+                    log("Result code wasn't OK (" + resultCode + "), not doing anything");
+                }
+                break;
         }
     }
 
@@ -161,7 +189,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements Goog
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     log("Settings need to be updated for better GPS precision");
                     try {
-                        status.startResolutionForResult(this, 2);
+                        status.startResolutionForResult(this, LOCATION_STATUS_REQUEST);
                     } catch (IntentSender.SendIntentException e) {
                         logE("Failed to send intent", e);
                     }

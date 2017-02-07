@@ -8,25 +8,28 @@ import com.joshdholtz.sentry.Sentry;
 import timber.log.Timber;
 
 public final class AppLogger {
+
+    public static final String TAG = "BTDACK:";
+
     public static void info(Object caller, String message, Object... args) {
         Timber.tag("BusTracker");
         Timber.tag(caller.getClass().getCanonicalName());
         Timber.i(message, args);
-        Log.i("DACK:" + caller.getClass().getCanonicalName(), String.format(message, args));
+        Log.i(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
     }
 
     public static void debug(Object caller, String message, Object... args) {
         Timber.tag("BusTracker");
         Timber.tag(caller.getClass().getCanonicalName());
         Timber.d(message, args);
-        Log.d("DACK:" + caller.getClass().getCanonicalName(), String.format(message, args));
+        Log.d(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
     }
 
     public static void verbose(Object caller, String message, Object... args) {
         Timber.tag("BusTracker");
         Timber.tag(caller.getClass().getCanonicalName());
         Timber.v(message, args);
-        Log.v("DACK:" + caller.getClass().getCanonicalName(), String.format(message, args));
+        Log.v(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
     }
 
     public static void error(Object caller, Throwable error, String message, Object... args) {
@@ -36,6 +39,6 @@ public final class AppLogger {
         if (BuildConfig.ENABLE_SENTRY) {
             Sentry.captureException(error, message);
         }
-        Log.e("DACK:" + caller.getClass().getCanonicalName(), String.format(message, args), error);
+        Log.e(TAG + caller.getClass().getCanonicalName(), String.format(message, args), error);
     }
 }

@@ -43,7 +43,7 @@ public final class RouteList {
 
     public void save(Storage storage) {
         String serialized = serialize();
-        log("Saving RouteList to storage: " + serialized);
+        log("Saving RouteList to storage: [" + serialized + "]");
         storage.write("routelist", serialized);
     }
 
@@ -58,10 +58,12 @@ public final class RouteList {
         Optional<String> data = storage.read("routelist");
         if (data.isPresent()) {
             for (String name : data.get().split(",")) {
-                routes.add(ImmutableRouteName.of(name));
+                if (!name.trim().isEmpty()) {
+                    routes.add(ImmutableRouteName.of(name));
+                }
             }
         }
-        log("After loading from storage, routes are now " + serialize());
+        log("After loading from storage, routes are now [" + serialize() + "]");
         loaded = true;
     }
 

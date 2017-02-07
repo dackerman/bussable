@@ -88,8 +88,10 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
     }
 
     public void removeUserLocation() {
-        userPosition.remove();
-        userPosition = null;
+        if (userPosition != null) {
+            userPosition.remove();
+            userPosition = null;
+        }
     }
 
     private void initializeMapWithCachedData() {
@@ -143,13 +145,29 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
         List<Polyline> polylines = new ArrayList<>();
         for (RoutePath routePath : route.paths()) {
             PolylineOptions options = new PolylineOptions()
-                    .color(Color.GREEN);
+                    .color(colorForRoute(route.routeName()));
             for (PathCoordinate coord : routePath.coordinates()) {
                 options.add(new LatLng(coord.lat(), coord.lon()));
             }
             polylines.add(map.addPolyline(options));
         }
         routes.put(routeName, polylines);
+    }
+
+    private int colorForRoute(RouteName route) {
+        // TODO: make this dynamic at some point
+        switch (route.displayName()) {
+            case "10":
+                return Color.RED;
+            case "47":
+                return Color.BLUE;
+            case "19":
+                return Color.GREEN;
+            case "12":
+                return Color.CYAN;
+            default:
+                return Color.GREEN;
+        }
     }
 
     @NonNull

@@ -1,5 +1,6 @@
 package com.dacklabs.bustracker.activity;
 
+import com.dacklabs.bustracker.application.AgencyRoutesCache;
 import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.BusApi;
 import com.dacklabs.bustracker.application.RouteDatabase;
@@ -8,7 +9,7 @@ import com.dacklabs.bustracker.application.Storage;
 import com.dacklabs.bustracker.application.requests.Message;
 import com.dacklabs.bustracker.http.HttpService;
 import com.dacklabs.bustracker.http.NextBusApi;
-import com.dacklabs.bustracker.http.ProcessRunner;
+import com.dacklabs.bustracker.application.ProcessRunner;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -34,6 +35,7 @@ final class BusTrackerApp {
     private RouteList routeList;
     private AsyncEventBus appEvents;
     private RouteDatabase db;
+    private AgencyRoutesCache agencyRoutesCache;
 
     public void initialize() {
         log("initializing");
@@ -47,6 +49,8 @@ final class BusTrackerApp {
         appEvents.register(routeList);
 
         db = new RouteDatabase();
+
+        agencyRoutesCache = new AgencyRoutesCache(busApi, new ExecutorProcessRunner(executor));
     }
 
     public void postMessage(Message message) {
@@ -59,6 +63,10 @@ final class BusTrackerApp {
 
     public RouteList routeList() {
         return routeList;
+    }
+
+    public AgencyRoutesCache agencyRoutesCache() {
+        return agencyRoutesCache;
     }
 
     public void load(Storage storage) {

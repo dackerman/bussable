@@ -2,6 +2,7 @@ package com.dacklabs.bustracker.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -15,16 +16,20 @@ import android.widget.CheckedTextView;
 import android.widget.ListView;
 
 import com.dacklabs.bustracker.R;
+import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.application.requests.ImmutableAddRouteRequest;
 import com.dacklabs.bustracker.application.requests.ImmutableRemoveRouteRequest;
-import com.dacklabs.bustracker.data.ImmutableRouteName;
 import com.dacklabs.bustracker.data.RouteName;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
 
@@ -32,7 +37,7 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
 
     private RouteSelectionItemArrayAdapter dataAdapter;
     private ListView routeSelectionView;
-    private List<RouteName> data = new ArrayList<>();
+    private List<RouteInfo> data = new ArrayList<>();
     private Set<RouteName> selectedItems = new HashSet<>();
 
     @Override
@@ -48,24 +53,10 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
         dataAdapter = new RouteSelectionItemArrayAdapter(this);
         routeSelectionView.setAdapter(dataAdapter);
 
-        data.add(ImmutableRouteName.of("10"));
-        data.add(ImmutableRouteName.of("47"));
-        data.add(ImmutableRouteName.of("12"));
-        data.add(ImmutableRouteName.of("19"));
-
-        RouteList routeList = app.routeList();
-        for (RouteName routeName : data) {
-            if (routeList.routeIsSelected(routeName)) {
-                selectedItems.add(routeName);
-            }
-        }
-
-        dataAdapter.addAll(data);
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
             for (int i = 0; i < data.size(); i++) {
-                RouteName routeName = data.get(i);
+                RouteName routeName = data.get(i).routeName();
                 if (selectedItems.contains(routeName)) {
                     app.postMessage(ImmutableAddRouteRequest.of(routeName));
                 } else {
@@ -76,11 +67,45 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
         });
 
         routeSelectionView.setOnItemClickListener(this);
+
+        new GetRouteListTask().execute("sf-muni");
+    }
+
+    private class GetRouteListTask extends AsyncTask<String, Integer, AgencyRoutes> {
+
+        @Override
+        protected AgencyRoutes doInBackground(String... agencies) {
+            String agency = agencies[0];
+            ListenableFuture<AgencyRoutes> future = app.agencyRoutesCache().routesForAgency(agency);
+            try {
+                return future.get(20, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                AppLogger.error(this, e, "Failed to get agency routes");
+            }
+            return ImmutableAgencyRoutes.of(agency, new ArrayList<>());
+        }
+
+        @Override
+        protected void onPostExecute(AgencyRoutes agencyRoutes) {
+            RouteList routeList = app.routeList();
+            for (RouteInfo routeInfo : agencyRoutes.routes()) {
+                if (routeList.routeIsSelected(routeInfo.routeName())) {
+                    data.add(routeInfo);
+                    selectedItems.add(routeInfo.routeName());
+                }
+            }
+            for (RouteInfo routeInfo : agencyRoutes.routes()) {
+                if (!routeList.routeIsSelected(routeInfo.routeName())) {
+                    data.add(routeInfo);
+                }
+            }
+            dataAdapter.addAll(data);
+        }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        RouteName routeName = data.get(position);
+        RouteName routeName = data.get(position).routeName();
         CheckedTextView checkView = (CheckedTextView) view.findViewById(R.id.route_selection_item_checkbox);
         if (selectedItems.contains(routeName)) {
             checkView.setChecked(false);
@@ -92,7 +117,7 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
     }
 
 
-    private final class RouteSelectionItemArrayAdapter extends ArrayAdapter<RouteName> {
+    private final class RouteSelectionItemArrayAdapter extends ArrayAdapter<RouteInfo> {
 
         public RouteSelectionItemArrayAdapter(Context context) {
             super(context, R.layout.fragment_route_selection_item, R.id.route_selection_item_checkbox);
@@ -103,9 +128,9 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = super.getView(position, convertView, parent);
             CheckedTextView checkView = (CheckedTextView) view.findViewById(R.id.route_selection_item_checkbox);
-            RouteName routeName = data.get(position);
-            checkView.setText(routeName.displayName());
-            if (selectedItems.contains(routeName)) {
+            RouteInfo routeInfo = data.get(position);
+            checkView.setText(routeInfo.routeTitle());
+            if (selectedItems.contains(routeInfo.routeName())) {
                 checkView.setChecked(true);
             } else {
                 checkView.setChecked(false);
