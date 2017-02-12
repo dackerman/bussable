@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;

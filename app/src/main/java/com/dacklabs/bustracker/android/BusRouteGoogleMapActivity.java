@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.android;
 
 import android.Manifest;
 import android.content.Intent;
@@ -20,7 +20,7 @@ import android.view.MenuItem;
 import com.dacklabs.bustracker.BuildConfig;
 import com.dacklabs.bustracker.R;
 import com.dacklabs.bustracker.application.AppLogger;
-import com.dacklabs.bustracker.http.DataSyncProcess;
+import com.dacklabs.bustracker.application.DataSyncProcess;
 import com.github.tony19.timber.loggly.LogglyTree;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,7 +40,7 @@ import java.util.ArrayList;
 
 import timber.log.Timber;
 
-import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
+import static com.dacklabs.bustracker.app.BusTrackerApp.app;
 
 public class BusRouteGoogleMapActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,

@@ -20,7 +20,7 @@
             android:value="@string/google_maps_key"/>
 
         <activity
-            android:name=".activity.BusRouteGoogleMapActivity"
+            android:name=".android.BusRouteGoogleMapActivity"
             android:label="@string/title_activity_bus_route_google_map">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -30,12 +30,12 @@
         </activity>
 
         <activity
-            android:name=".activity.RouteSelectionActivity"
+            android:name=".android.RouteSelectionActivity"
             android:label="@string/title_activity_route_selection"
-            android:parentActivityName=".activity.BusRouteGoogleMapActivity">
+            android:parentActivityName=".android.BusRouteGoogleMapActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.dacklabs.bustracker.activity.BusRouteGoogleMapActivity"/>
+                android:value="com.dacklabs.bustracker.android.BusRouteGoogleMapActivity"/>
         </activity>
     </application>
 

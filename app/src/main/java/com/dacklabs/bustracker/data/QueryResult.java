@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.application;
+package com.dacklabs.bustracker.data;
 
 public class QueryResult<T> {
     public final T result;

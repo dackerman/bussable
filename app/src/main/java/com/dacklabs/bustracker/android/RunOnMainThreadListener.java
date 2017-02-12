@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.android;
 
 import android.app.Activity;
 
@@ -8,18 +8,6 @@ import com.dacklabs.bustracker.data.BusRouteUpdated;
 import com.dacklabs.bustracker.data.RouteRemoved;
 
 public final class RunOnMainThreadListener implements RouteDatabase.Listener {
-
-    public static class Factory {
-        private final Activity activity;
-
-        public Factory(Activity activity) {
-            this.activity = activity;
-        }
-
-        public RunOnMainThreadListener wrap(RouteDatabase.Listener otherListener) {
-            return new RunOnMainThreadListener(activity, otherListener);
-        }
-    }
 
     private final Activity activity;
     private final RouteDatabase.Listener otherListener;

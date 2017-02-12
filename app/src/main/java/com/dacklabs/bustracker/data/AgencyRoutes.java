@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.data;
 
 import com.google.common.collect.ImmutableList;
 

@@ -1,7 +1,8 @@
 package com.dacklabs.bustracker.application;
 
-import com.dacklabs.bustracker.activity.AgencyRoutes;
-import com.dacklabs.bustracker.activity.ImmutableAgencyRoutes;
+import com.dacklabs.bustracker.data.AgencyRoutes;
+import com.dacklabs.bustracker.data.ImmutableAgencyRoutes;
+import com.dacklabs.bustracker.data.QueryResult;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;

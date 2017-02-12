@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.app;
 
 import com.dacklabs.bustracker.application.AgencyRoutesCache;
 import com.dacklabs.bustracker.application.AppLogger;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
-final class BusTrackerApp {
+public final class BusTrackerApp {
 
     public static final BusTrackerApp app = new BusTrackerApp();
     public static final int IDLE_THREAD_POOL_SIZE = 5;

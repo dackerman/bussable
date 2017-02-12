@@ -2,22 +2,22 @@ package com.dacklabs.bustracker.http;
 
 import android.util.Xml;
 
-import com.dacklabs.bustracker.activity.AgencyRoutes;
-import com.dacklabs.bustracker.activity.ImmutableAgencyRoutes;
-import com.dacklabs.bustracker.activity.ImmutableRouteInfo;
 import com.dacklabs.bustracker.application.AppLogger;
-import com.dacklabs.bustracker.application.QueryResult;
-import com.dacklabs.bustracker.data.QueryBusLocations;
-import com.dacklabs.bustracker.data.QueryBusRoute;
+import com.dacklabs.bustracker.data.QueryResult;
+import com.dacklabs.bustracker.data.AgencyRoutes;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.Direction;
+import com.dacklabs.bustracker.data.ImmutableAgencyRoutes;
 import com.dacklabs.bustracker.data.ImmutableBusLocation;
 import com.dacklabs.bustracker.data.ImmutableBusLocations;
 import com.dacklabs.bustracker.data.ImmutableBusRoute;
 import com.dacklabs.bustracker.data.ImmutablePathCoordinate;
+import com.dacklabs.bustracker.data.ImmutableRouteInfo;
 import com.dacklabs.bustracker.data.ImmutableRouteName;
 import com.dacklabs.bustracker.data.ImmutableRoutePath;
+import com.dacklabs.bustracker.data.QueryBusLocations;
+import com.dacklabs.bustracker.data.QueryBusRoute;
 import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.data.RoutePath;
 import com.google.common.collect.ImmutableMap;

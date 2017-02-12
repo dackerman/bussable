@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.activity;
+package com.dacklabs.bustracker.android;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,8 +18,11 @@ import android.widget.ListView;
 import com.dacklabs.bustracker.R;
 import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteList;
+import com.dacklabs.bustracker.data.AgencyRoutes;
 import com.dacklabs.bustracker.data.ImmutableAddRouteRequest;
+import com.dacklabs.bustracker.data.ImmutableAgencyRoutes;
 import com.dacklabs.bustracker.data.ImmutableRemoveRouteRequest;
+import com.dacklabs.bustracker.data.RouteInfo;
 import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -31,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
+import static com.dacklabs.bustracker.app.BusTrackerApp.app;
 
 public class RouteSelectionActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 

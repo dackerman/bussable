@@ -1,15 +1,10 @@
-package com.dacklabs.bustracker.http;
+package com.dacklabs.bustracker.application;
 
-import com.dacklabs.bustracker.application.AppLogger;
-import com.dacklabs.bustracker.application.BusApi;
-import com.dacklabs.bustracker.application.ProcessRunner;
-import com.dacklabs.bustracker.application.QueryResult;
-import com.dacklabs.bustracker.application.RouteDatabase;
-import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.data.BusLocations;
 import com.dacklabs.bustracker.data.BusRoute;
 import com.dacklabs.bustracker.data.ImmutableQueryBusLocations;
 import com.dacklabs.bustracker.data.ImmutableQueryBusRoute;
+import com.dacklabs.bustracker.data.QueryResult;
 import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.Futures;
