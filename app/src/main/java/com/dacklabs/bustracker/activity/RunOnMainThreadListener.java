@@ -3,9 +3,9 @@ package com.dacklabs.bustracker.activity;
 import android.app.Activity;
 
 import com.dacklabs.bustracker.application.RouteDatabase;
-import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
-import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.RouteRemoved;
+import com.dacklabs.bustracker.data.BusLocationsAvailable;
+import com.dacklabs.bustracker.data.BusRouteUpdated;
+import com.dacklabs.bustracker.data.RouteRemoved;
 
 public final class RunOnMainThreadListener implements RouteDatabase.Listener {
 

@@ -1,16 +1,16 @@
 package com.dacklabs.bustracker.application;
 
-import com.dacklabs.bustracker.application.requests.BusLocationsAvailable;
-import com.dacklabs.bustracker.application.requests.BusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.ImmutableBusLocationsAvailable;
-import com.dacklabs.bustracker.application.requests.ImmutableBusRouteUpdated;
-import com.dacklabs.bustracker.application.requests.RouteRemoved;
 import com.dacklabs.bustracker.data.BusLocation;
 import com.dacklabs.bustracker.data.BusLocationUpdate;
 import com.dacklabs.bustracker.data.BusLocations;
+import com.dacklabs.bustracker.data.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.data.BusRouteUpdated;
 import com.dacklabs.bustracker.data.ImmutableBusLocationUpdate;
+import com.dacklabs.bustracker.data.ImmutableBusLocationsAvailable;
+import com.dacklabs.bustracker.data.ImmutableBusRouteUpdated;
 import com.dacklabs.bustracker.data.RouteName;
+import com.dacklabs.bustracker.data.RouteRemoved;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 

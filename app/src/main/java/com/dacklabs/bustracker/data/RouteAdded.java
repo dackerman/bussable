@@ -1,7 +1,5 @@
-package com.dacklabs.bustracker.application.requests;
+package com.dacklabs.bustracker.data;
 
-
-import com.dacklabs.bustracker.data.RouteName;
 
 import org.immutables.value.Value;
 

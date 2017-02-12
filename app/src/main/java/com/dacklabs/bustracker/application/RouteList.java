@@ -1,10 +1,10 @@
 package com.dacklabs.bustracker.application;
 
-import com.dacklabs.bustracker.application.requests.AddRouteRequest;
-import com.dacklabs.bustracker.application.requests.ImmutableRouteAdded;
-import com.dacklabs.bustracker.application.requests.ImmutableRouteRemoved;
-import com.dacklabs.bustracker.application.requests.RemoveRouteRequest;
+import com.dacklabs.bustracker.data.AddRouteRequest;
+import com.dacklabs.bustracker.data.ImmutableRouteAdded;
 import com.dacklabs.bustracker.data.ImmutableRouteName;
+import com.dacklabs.bustracker.data.ImmutableRouteRemoved;
+import com.dacklabs.bustracker.data.RemoveRouteRequest;
 import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;

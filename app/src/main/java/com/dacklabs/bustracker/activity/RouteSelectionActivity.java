@@ -18,8 +18,8 @@ import android.widget.ListView;
 import com.dacklabs.bustracker.R;
 import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteList;
-import com.dacklabs.bustracker.application.requests.ImmutableAddRouteRequest;
-import com.dacklabs.bustracker.application.requests.ImmutableRemoveRouteRequest;
+import com.dacklabs.bustracker.data.ImmutableAddRouteRequest;
+import com.dacklabs.bustracker.data.ImmutableRemoveRouteRequest;
 import com.dacklabs.bustracker.data.RouteName;
 import com.google.common.util.concurrent.ListenableFuture;
 
