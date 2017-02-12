@@ -42,7 +42,10 @@ import timber.log.Timber;
 
 import static com.dacklabs.bustracker.activity.BusTrackerApp.app;
 
-public class BusRouteGoogleMapActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
+public class BusRouteGoogleMapActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks,
+        LocationListener,
+        GoogleApiClient.OnConnectionFailedListener {
 
     private BusRouteGoogleMapView map;
     private GoogleApiClient googleApiClient;

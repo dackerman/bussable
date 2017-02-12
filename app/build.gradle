@@ -36,12 +36,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
-    // <-- for annotation processor
-    // <-- for annotation API
-    // for annotations
-    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.1@aar') {
-        transitive = true
-    }
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -50,9 +44,9 @@ dependencies {
     compile 'com.joshdholtz.sentry:sentry-android:1.5.0'
     compile 'com.google.guava:guava:20.0'
     compile 'com.github.tony19:timber-loggly:1.0.1'
-    compile 'com.android.support:appcompat-v7:25.1.0'
-    compile 'com.android.support:support-v4:25.1.0'
-    compile 'com.android.support:design:25.1.0'
+    compile 'com.android.support:appcompat-v7:25.1.1'
+    compile 'com.android.support:support-v4:25.1.1'
+    compile 'com.android.support:design:25.1.1'
     compile 'com.google.android.gms:play-services:10.0.1'
     testCompile 'junit:junit:4.12'
     testCompile 'com.squareup.okhttp3:mockwebserver:3.5.0'
