@@ -5,17 +5,16 @@ import android.graphics.Color;
 import android.location.Location;
 import android.support.annotation.NonNull;
 
-import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteDatabase;
 import com.dacklabs.bustracker.application.RouteList;
-import com.dacklabs.bustracker.data.BusLocationsAvailable;
-import com.dacklabs.bustracker.data.BusRouteUpdated;
-import com.dacklabs.bustracker.data.RouteRemoved;
 import com.dacklabs.bustracker.data.BusLocation;
+import com.dacklabs.bustracker.data.BusLocationsAvailable;
 import com.dacklabs.bustracker.data.BusRoute;
+import com.dacklabs.bustracker.data.BusRouteUpdated;
 import com.dacklabs.bustracker.data.PathCoordinate;
 import com.dacklabs.bustracker.data.RouteName;
 import com.dacklabs.bustracker.data.RoutePath;
+import com.dacklabs.bustracker.data.RouteRemoved;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -31,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.dacklabs.bustracker.android.BusTrackerApp.app;
 
 public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMapReadyCallback {
 
@@ -197,6 +198,6 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        app.logger().info(this, message);
     }
 }

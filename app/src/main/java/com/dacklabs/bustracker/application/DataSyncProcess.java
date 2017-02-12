@@ -28,13 +28,14 @@ public final class DataSyncProcess {
     private final ProcessRunner runner;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final ConcurrentHashMap<RouteName, String> lastQueryTimes = new ConcurrentHashMap<>();
+    private final AppLogger log;
 
-    public DataSyncProcess(RouteList routeList, RouteDatabase db, BusApi api, ProcessRunner
-            runner) {
+    public DataSyncProcess(RouteList routeList, RouteDatabase db, BusApi api, ProcessRunner runner, AppLogger log) {
         this.routeList = routeList;
         this.db = db;
         this.api = api;
         this.runner = runner;
+        this.log = log;
     }
 
     public void stopSyncing() {
@@ -129,10 +130,10 @@ public final class DataSyncProcess {
     }
 
     private void logE(String message, Throwable e) {
-        AppLogger.error(this, e, message);
+        log.error(this, e, message);
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        log.info(this, message);
     }
 }

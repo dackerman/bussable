@@ -16,7 +16,6 @@ import android.widget.CheckedTextView;
 import android.widget.ListView;
 
 import com.dacklabs.bustracker.R;
-import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.RouteList;
 import com.dacklabs.bustracker.data.AgencyRoutes;
 import com.dacklabs.bustracker.data.ImmutableAddRouteRequest;
@@ -34,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.dacklabs.bustracker.app.BusTrackerApp.app;
+import static com.dacklabs.bustracker.android.BusTrackerApp.app;
 
 public class RouteSelectionActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
@@ -83,7 +82,7 @@ public class RouteSelectionActivity extends AppCompatActivity implements Adapter
             try {
                 return future.get(20, TimeUnit.SECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                AppLogger.error(this, e, "Failed to get agency routes");
+                app.logger().error(this, e, "Failed to get agency routes");
             }
             return ImmutableAgencyRoutes.of(agency, new ArrayList<>());
         }

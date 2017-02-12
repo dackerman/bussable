@@ -20,9 +20,11 @@ public final class RouteList {
     private boolean loaded = false;
     private final Set<RouteName> routes = Sets.newConcurrentHashSet();
     private final EventBus eventBus;
+    private final AppLogger log;
 
-    public RouteList(EventBus eventBus) {
+    public RouteList(EventBus eventBus, AppLogger log) {
         this.eventBus = eventBus;
+        this.log = log;
     }
 
     @Subscribe
@@ -76,6 +78,6 @@ public final class RouteList {
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        log.info(this, message);
     }
 }

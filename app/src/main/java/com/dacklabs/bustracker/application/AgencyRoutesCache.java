@@ -16,29 +16,31 @@ public final class AgencyRoutesCache {
     private final Map<String, AgencyRoutes> routeCache = new ConcurrentHashMap<>();
     private final BusApi busApi;
     private final ProcessRunner processRunner;
+    private final AppLogger log;
 
-    public AgencyRoutesCache(BusApi busApi, ProcessRunner processRunner) {
+    public AgencyRoutesCache(BusApi busApi, ProcessRunner processRunner, AppLogger log) {
         this.busApi = busApi;
         this.processRunner = processRunner;
+        this.log = log;
     }
 
     public ListenableFuture<AgencyRoutes> routesForAgency(String agency) {
         AgencyRoutes agencyRoutes = routeCache.get(agency);
         if (agencyRoutes != null) {
-            AppLogger.debug(this, "Already had agency list for %s, returning immediately", agency);
+            log.debug(this, "Already had agency list for %s, returning immediately", agency);
             return Futures.immediateFuture(agencyRoutes);
         }
 
-        AppLogger.debug(this, "Querying for agency list %s not yet in cache", agency);
+        log.debug(this, "Querying for agency list %s not yet in cache", agency);
         SettableFuture<AgencyRoutes> future = SettableFuture.create();
         processRunner.execute(() -> {
             QueryResult<AgencyRoutes> result = busApi.queryProvider(agency);
             if (result.succeeded()) {
-                AppLogger.debug(this, "Got agency list successfully, returning");
+                log.debug(this, "Got agency list successfully, returning");
                 routeCache.put(agency, result.result);
                 future.set(result.result);
             }
-            AppLogger.info(this, "Failed to get agency routes! error %s", result.failureMessage);
+            log.info(this, "Failed to get agency routes! error %s", result.failureMessage);
             future.set(ImmutableAgencyRoutes.of(agency, new ArrayList<>()));
         });
         return future;

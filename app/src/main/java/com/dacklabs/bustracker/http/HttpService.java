@@ -16,9 +16,11 @@ public class HttpService {
     private final Collection<Call> inFlightRequests = new LinkedList<>();
     private final OkHttpClient client;
     private volatile boolean isCanceled;
+    private AppLogger log;
 
-    public HttpService(OkHttpClient client) {
+    public HttpService(OkHttpClient client, AppLogger log) {
         this.client = client;
+        this.log = log;
     }
 
     public void cancelInFlightRequests() {
@@ -55,10 +57,10 @@ public class HttpService {
     }
 
     private void logv(String message) {
-        AppLogger.verbose(this, message);
+        log.verbose(this, message);
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        log.info(this, message);
     }
 }

@@ -1,4 +1,4 @@
-package com.dacklabs.bustracker.app;
+package com.dacklabs.bustracker.android;
 
 import com.dacklabs.bustracker.application.AgencyRoutesCache;
 import com.dacklabs.bustracker.application.AppLogger;
@@ -36,21 +36,22 @@ public final class BusTrackerApp {
     private AsyncEventBus appEvents;
     private RouteDatabase db;
     private AgencyRoutesCache agencyRoutesCache;
+    private final AppLogger logger = new AndroidTimberSentryLogger();
 
     public void initialize() {
         log("initializing");
         executor = Executors.newScheduledThreadPool(IDLE_THREAD_POOL_SIZE);
         appEvents = new AsyncEventBus("events", executor);
 
-        http = new HttpService(new OkHttpClient());
-        busApi = new NextBusApi(http);
+        http = new HttpService(new OkHttpClient(), logger);
+        busApi = new NextBusApi(http, logger);
 
-        routeList = new RouteList(appEvents);
+        routeList = new RouteList(appEvents, logger);
         appEvents.register(routeList);
 
-        db = new RouteDatabase();
+        db = new RouteDatabase(logger);
 
-        agencyRoutesCache = new AgencyRoutesCache(busApi, new ExecutorProcessRunner(executor));
+        agencyRoutesCache = new AgencyRoutesCache(busApi, new ExecutorProcessRunner(executor), logger);
     }
 
     public void postMessage(Message message) {
@@ -90,7 +91,11 @@ public final class BusTrackerApp {
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        logger.info(this, message);
+    }
+
+    public AppLogger logger() {
+        return logger;
     }
 
     public ExecutorProcessRunner processRunner() {

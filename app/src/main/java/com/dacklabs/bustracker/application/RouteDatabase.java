@@ -26,17 +26,20 @@ public final class RouteDatabase {
     public interface Listener {
 
         void onBusLocationsUpdated(BusLocationsAvailable locationsUpdated);
-
         void onBusRouteUpdated(BusRouteUpdated routeUpdated);
         void onBusRouteRemoved(RouteRemoved message);
     }
     private Set<Listener> listeners = Sets.newConcurrentHashSet();
-    private final ConcurrentHashMap<RouteName, BusRoute> routes = new ConcurrentHashMap<>();
 
+    private final ConcurrentHashMap<RouteName, BusRoute> routes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<RouteName, Map<String, BusLocation>> locations = new
             ConcurrentHashMap<>();
-
     private final BlockingDeque<BusLocationUpdate> updateQueue = new LinkedBlockingDeque<>();
+    private final AppLogger log;
+
+    public RouteDatabase(AppLogger log) {
+        this.log = log;
+    }
 
     public void registerListener(Listener listener) {
         listeners.add(listener);
@@ -90,6 +93,6 @@ public final class RouteDatabase {
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        log.info(this, message);
     }
 }

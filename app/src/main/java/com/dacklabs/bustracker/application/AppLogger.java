@@ -1,44 +1,11 @@
 package com.dacklabs.bustracker.application;
 
-import android.util.Log;
+public interface AppLogger {
+    void info(Object caller, String message, Object... args);
 
-import com.dacklabs.bustracker.BuildConfig;
-import com.joshdholtz.sentry.Sentry;
+    void debug(Object caller, String message, Object... args);
 
-import timber.log.Timber;
+    void verbose(Object caller, String message, Object... args);
 
-public final class AppLogger {
-
-    public static final String TAG = "BTDACK:";
-
-    public static void info(Object caller, String message, Object... args) {
-        Timber.tag("BusTracker");
-        Timber.tag(caller.getClass().getCanonicalName());
-        Timber.i(message, args);
-        Log.i(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
-    }
-
-    public static void debug(Object caller, String message, Object... args) {
-        Timber.tag("BusTracker");
-        Timber.tag(caller.getClass().getCanonicalName());
-        Timber.d(message, args);
-        Log.d(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
-    }
-
-    public static void verbose(Object caller, String message, Object... args) {
-        Timber.tag("BusTracker");
-        Timber.tag(caller.getClass().getCanonicalName());
-        Timber.v(message, args);
-        Log.v(TAG + caller.getClass().getCanonicalName(), String.format(message, args));
-    }
-
-    public static void error(Object caller, Throwable error, String message, Object... args) {
-        Timber.tag("BusTracker");
-        Timber.tag(caller.getClass().getCanonicalName());
-        Timber.e(error, message, args);
-        if (BuildConfig.ENABLE_SENTRY) {
-            Sentry.captureException(error, message);
-        }
-        Log.e(TAG + caller.getClass().getCanonicalName(), String.format(message, args), error);
-    }
+    void error(Object caller, Throwable error, String message, Object... args);
 }

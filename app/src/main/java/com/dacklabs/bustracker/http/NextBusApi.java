@@ -34,9 +34,11 @@ import java.util.Map;
 public class NextBusApi implements com.dacklabs.bustracker.application.BusApi {
 
     private final HttpService http;
+    private final AppLogger log;
 
-    public NextBusApi(HttpService http) {
+    public NextBusApi(HttpService http, AppLogger log) {
         this.http = http;
+        this.log = log;
     }
 
     @Override
@@ -180,10 +182,10 @@ public class NextBusApi implements com.dacklabs.bustracker.application.BusApi {
         try {
             return QueryResult.success(call.doCall());
         } catch (XmlPullParserException e) {
-            AppLogger.error(this, e, "Failed XML Parsing");
+            log.error(this, e, "Failed XML Parsing");
             return QueryResult.failure(e.getMessage());
         } catch (IOException e) {
-            AppLogger.error(this, e, "IO Exception while calling backend");
+            log.error(this, e, "IO Exception while calling backend");
             return QueryResult.failure(e.getMessage());
         }
     }

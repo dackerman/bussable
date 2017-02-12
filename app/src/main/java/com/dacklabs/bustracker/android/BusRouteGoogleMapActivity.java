@@ -19,7 +19,6 @@ import android.view.MenuItem;
 
 import com.dacklabs.bustracker.BuildConfig;
 import com.dacklabs.bustracker.R;
-import com.dacklabs.bustracker.application.AppLogger;
 import com.dacklabs.bustracker.application.DataSyncProcess;
 import com.github.tony19.timber.loggly.LogglyTree;
 import com.google.android.gms.common.ConnectionResult;
@@ -40,7 +39,7 @@ import java.util.ArrayList;
 
 import timber.log.Timber;
 
-import static com.dacklabs.bustracker.app.BusTrackerApp.app;
+import static com.dacklabs.bustracker.android.BusTrackerApp.app;
 
 public class BusRouteGoogleMapActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -84,7 +83,7 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements
     }
 
     private void setupApp() {
-        dataSyncProcess = new DataSyncProcess(app.routeList(), app.db(), app.nextBusApi(), app.processRunner());
+        dataSyncProcess = new DataSyncProcess(app.routeList(), app.db(), app.nextBusApi(), app.processRunner(), app.logger());
 
         mapDbListener = new RunOnMainThreadListener(this, map);
         app.db().registerListener(mapDbListener);
@@ -266,10 +265,10 @@ public class BusRouteGoogleMapActivity extends AppCompatActivity implements
     }
 
     private void log(String message) {
-        AppLogger.info(this, message);
+        app.logger().info(this, message);
     }
 
     private void logE(String message, Throwable e) {
-        AppLogger.error(this, e, message);
+        app.logger().error(this, e, message);
     }
 }
