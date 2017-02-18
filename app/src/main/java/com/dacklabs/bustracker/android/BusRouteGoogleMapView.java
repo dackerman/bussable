@@ -25,6 +25,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -146,7 +149,7 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
         List<Polyline> polylines = new ArrayList<>();
         for (RoutePath routePath : route.paths()) {
             PolylineOptions options = new PolylineOptions()
-                    .color(colorForRoute(route.routeName()));
+                    .color(colorCache.getUnchecked(routeName));
             for (PathCoordinate coord : routePath.coordinates()) {
                 options.add(new LatLng(coord.lat(), coord.lon()));
             }
@@ -155,19 +158,15 @@ public final class BusRouteGoogleMapView implements RouteDatabase.Listener, OnMa
         routes.put(routeName, polylines);
     }
 
-    private int colorForRoute(RouteName route) {
-        // TODO: make this dynamic at some point
-        switch (route.displayName()) {
-            case "10":
-                return Color.RED;
-            case "47":
-                return Color.BLUE;
-            case "19":
-                return Color.GREEN;
-            case "12":
-                return Color.CYAN;
-            default:
-                return Color.GREEN;
+    private static final LoadingCache<RouteName, Integer> colorCache = CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .build(new MakeColor());
+
+    private static final class MakeColor extends CacheLoader<RouteName, Integer> {
+        @Override
+        public Integer load(RouteName route) throws Exception {
+            int hash = (Math.abs(route.displayName().hashCode()) * 137) % 36;
+            return Color.HSVToColor(new float[]{hash * 10, .8f, .8f});
         }
     }
 
